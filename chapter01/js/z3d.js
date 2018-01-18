@@ -70,7 +70,7 @@ z3D.prototype.start = function () {
         document.getElementById(_this.fId).appendChild(warning);
         return;
     }
-    
+
     //开始
     var _this = this;
     z3DObj = _this;
@@ -510,7 +510,71 @@ z3D.prototype.addBtns = function (_btnobjs) {
             $("#" + _obj.btnid).on("click", _obj.event);
         });
     }
-}
+};
+
+/**
+ * 视角俯视
+ * @param {*} 
+ */
+z3D.prototype.viewRecover = function () {
+    var _this = z3DObj;
+    var mainCamera = _this.commonFunc.findObject("mainCamera"); //主摄像机
+    var controls = _this.controls; //主控制器
+    //controls.enableRotate = true;//允许旋转
+    //角度初始化
+    var conTarget = new createjs.Tween(controls.target)
+        .to(controls.target0, 1000, createjs.Ease.InOut);
+    //位置初始化并镜头俯视
+    var conPosition = new createjs.Tween(controls.object.position)
+        .to(controls.position0, 1000, createjs.Ease.InOut).to({
+            x: 0,
+            y: 2000,
+            z: 0
+        }, 1000, createjs.Ease.InOut);
+    mainCamera.lookAt({
+        x: 0,
+        y: 0,
+        z: 0
+    });
+    //controls.enableRotate = false; //不允许旋转
+};
+/**
+ * 要素位置还原
+ * @param {*} _objs 
+ * @param {*} _basedata 基础数据
+ * @param {*} _datajson 需添加数据
+ */
+z3D.prototype.meshViewRecover = function (_objs, _basedata, _datajson) {
+    var _this = z3DObj;
+
+    var baseDataObjs = null;
+    if (_this.commonFunc.hasObj(_basedata)) {
+        baseDataObjs = _this.commonFunc.hasObj(_basedata.objList) ? _basedata.objList : null;
+    }
+    var dataJsonObjs = null;
+    if (_this.commonFunc.hasObj(_datajson)) {
+        dataJsonObjs = _this.commonFunc.hasObj(_datajson.objList) ? _datajson.objList : null;
+    }
+
+
+    if (baseDataObjs != null) {
+        //将基础数据与需添加数据合并
+        baseDataObjs = dataJsonObjs != null ? baseDataObjs.concat(dataJsonObjs) : baseDataObjs;
+        //遍历并找到动态数据中，对应的Mesh对象
+        $.each(_objs, function (index, _obj) {
+            if (_obj.uuid != null && _obj._obj != '' && _obj.type == "Mesh") {
+                var meshobj = _this.commonFunc.findObjectInData(_obj.uuid, baseDataObjs);
+                var Mposition = new createjs.Tween(_obj.position).to({
+                    x: meshobj.x,
+                    y: meshobj.y,
+                    z: meshobj.z,
+                }, 1000, createjs.Ease.InOut);
+            }
+        });
+    }
+
+
+};
 
 /**
  * 通用方法
@@ -536,6 +600,22 @@ z3D.prototype.commonFunc = {
         $.each(_this.objects, function (index, _obj) {
             if (_obj.name != null && _obj.name != '') {
                 if (_obj.name == _objname) {
+                    findedobj = _obj;
+                    return true;
+                }
+            }
+        });
+        return findedobj;
+    },
+    /**
+     * 在动态数据中查找对象
+     */
+    findObjectInData: function (_objuuid, _objs) {
+        var _this = z3DObj;
+        var findedobj = null;
+        $.each(_objs, function (index, _obj) {
+            if (_obj.uuid != null && _obj.uuid != '') {
+                if (_obj.uuid == _objuuid) {
                     findedobj = _obj;
                     return true;
                 }

@@ -103,24 +103,8 @@ var baseBtns = [{
         btnTitle: "走线管理",
         btnimg: "images/icons/connection.png",
         event: function () {
-            //z3DObj.controls.enableRotate = true;//允许旋转
-            //镜头复原
-            var mainCamera = z3DObj.commonFunc.findObject("mainCamera"); //主摄像机
-            var Cposition =  new createjs.Tween(mainCamera.position).to({
-                x: 0,
-                y: 1000,
-                z: 1800,
-            }, 1000, createjs.Ease.InOut).to({
-                x: 0,
-                y: 2000,
-                z: 0,
-            }, 1000, createjs.Ease.InOut);
-            mainCamera.lookAt({
-                x: 0,
-                y: 0,
-                z: 0
-            });
-            //z3DObj.controls.enableRotate = false; //不允许旋转
+            //视角俯视事件
+            z3DObj.viewRecover();
         }
     },
     {
