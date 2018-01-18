@@ -100,7 +100,7 @@ var baseBtns = [{
     },
     {
         btnid: "btn_connection",
-        btnTitle: "走线管理",
+        btnTitle: "编辑墙壁",
         btnimg: "images/icons/connection.png",
         event: function () {
             //视角俯视事件

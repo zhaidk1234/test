@@ -48,14 +48,28 @@ z3D.prototype.initz3D = function (_fId, _option, _basedata, _datajson) {
     this.scene = null; //场景
     this.stats = null; //性能插件
     this.objects = [];
+    this.splineOutline = null; //曲线输出线
+    this.splineHelperObjects = []; //曲线辅助数组
+    this.ARC_SEGMENTS = 200; //节点最大值
+    this.splineMesh = null; //曲线
+    this.splines = {}; //曲线对象
+    this.splinePointsLength = 4; //曲线初始化节点数量
+    this.positions = []; //
+
     this.mouseClick = new THREE.Vector2();
     this.raycaster = new THREE.Raycaster();
+
     this.controls = null; //鼠标控制器
+    this.transformControl = null; //变换控制器
+    this.dragControl = null; //拖动控制器
     this.SELECTED = null; //选中物体
     this.INTERSECTED = null; //鼠标覆盖物体
 
     this.basedata = _basedata; //基础数据渲染 
     this.datajson = _datajson; //需添加数据
+
+    this.editState = 0; //编辑状态，0为不可编辑，1为可编辑
+    this.hiding = null; //拖动组件隐藏状态
 
     var _this = this;
 };
@@ -87,6 +101,8 @@ z3D.prototype.start = function () {
         _this.InitAddBaseObject(_obj);
     });
     _this.initMouseCtrl(); //鼠标控制器
+    _this.initTransformControl(); //变换控制器
+    _this.initDragControl(); //拖动控制器
     _this.initResize(_this.fId);
     _this.addBtns(_this.basedata.btns); //创建按钮
     _this.animation(); //循环渲染界面
@@ -225,6 +241,43 @@ z3D.prototype.initMouseCtrl = function () {
     //_this.controls.addEventListener('change', _this.updateControls);
 };
 /**
+ * 变换控制器
+ */
+z3D.prototype.initTransformControl = function () {
+    var _this = this;
+    _this.transformControl = new THREE.TransformControls(_this.camera, _this.renderer.domElement);
+    _this.transformControl.addEventListener('change', _this.animation);
+    _this.scene.add(_this.transformControl);
+    //隐藏变换相关动作
+    _this.transformControl.addEventListener('change', function (e) {
+        _this.commonFunc.cancelHideTransorm();
+    });
+    _this.transformControl.addEventListener('mouseDown', function (e) {
+        _this.commonFunc.cancelHideTransorm();
+    });
+    _this.transformControl.addEventListener('mouseUp', function (e) {
+        _this.commonFunc.delayHideTransform();
+    });
+    _this.transformControl.addEventListener('objectChange', function (e) {
+        _this.commonFunc.updateSplineOutline();
+    });
+};
+/**
+ * 拖动控制器
+ */
+z3D.prototype.initDragControl = function () {
+    var _this = this;
+    _this.dragcontrols = new THREE.DragControls(_this.splineHelperObjects, _this.camera, _this.renderer.domElement); //
+    _this.dragcontrols.enabled = false;
+    _this.dragcontrols.addEventListener('hoveron', function (event) {
+        _this.transformControl.attach(event.object);
+        _this.commonFunc.cancelHideTransorm();
+    });
+    _this.dragcontrols.addEventListener('hoveroff', function (event) {
+        _this.commonFunc.delayHideTransform();
+    });
+};
+/**
  * 控制器回调
  */
 z3D.prototype.updateControls = function () {
@@ -266,6 +319,7 @@ z3D.prototype.animation = function () {
     _this.controls.update();
     _this.renderer.render(_this.scene, _this.camera);
     _this.stats.update();
+    _this.transformControl.update();
 };
 
 /**
@@ -275,6 +329,39 @@ z3D.prototype.initObject = function () {
 
     var _this = this;
 
+    /*******
+     * Curves
+     *********/
+    // for (var i = 0; i < 0; i++) {
+    //     _this.commonFunc.addSplineObject(_this.positions[i]);
+    // }
+    _this.positions = [];
+    // for (var i = 0; i < 0; i++) {
+    //     _this.positions.push(_this.splineHelperObjects[i].position);
+    // }
+    var geometry = new THREE.Geometry();
+    for (var i = 0; i < _this.ARC_SEGMENTS; i++) {
+        geometry.vertices.push(new THREE.Vector3());
+    }
+    var curve = new THREE.CatmullRomCurve3(_this.positions);
+    curve.curveType = 'catmullrom';
+    curve.mesh = new THREE.Line(geometry.clone(), new THREE.LineBasicMaterial({
+        color: 0xff0000,
+        opacity: 0.35,
+        linewidth: 2
+    }));
+    curve.mesh.castShadow = true;
+    _this.splines.uniform = curve;
+    _this.splines.uniform.tension = 0; //曲率指数
+    for (var k in _this.splines) {
+        var spline = _this.splines[k];
+        _this.scene.add(spline.mesh);
+    }
+    // _this.initLoadDrawPointObject([new THREE.Vector3(289.76843686945404, 452.51481137238443, 56.10018915737797),
+    //     new THREE.Vector3(-53.56300074753207, 171.49711742836848, -14.495472686253045),
+    //     new THREE.Vector3(-91.40118730204415, 176.4306956436485, -6.958271935582161),
+    //     new THREE.Vector3(-383.785318791128, 491.1365363371675, 47.869296953772746)
+    // ]);
     // var geometry = new THREE.Geometry();
     // var material = new THREE.LineBasicMaterial({
     //     vertexColors: THREE.VertexColors
@@ -293,7 +380,22 @@ z3D.prototype.initObject = function () {
     // // 加入到场景中             
     // _this.scene.add(line);
 };
-
+/**
+ * 读取节点数据
+ */
+z3D.prototype.initLoadDrawPointObject = function (new_positions) {
+    var _this = this;
+    while (new_positions.length > _this.positions.length) {
+        _this.commonFunc.addPoint();
+    }
+    while (new_positions.length < _this.positions.length) {
+        _this.commonFunc.removePoint();
+    }
+    for (var i = 0; i < _this.positions.length; i++) {
+        _this.positions[i].copy(new_positions[i]);
+    }
+    _this.commonFunc.updateSplineOutline();
+};
 /**
  * 添加基础对象
  * @param {*} _obj {
@@ -520,23 +622,29 @@ z3D.prototype.viewRecover = function () {
     var _this = z3DObj;
     var mainCamera = _this.commonFunc.findObject("mainCamera"); //主摄像机
     var controls = _this.controls; //主控制器
-    //controls.enableRotate = true;//允许旋转
+    _this.editState = _this.editState == 0 ? 1 : 0; //更改可编辑状态
+    controls.enableRotate = true; //允许旋转
     //角度初始化
     var conTarget = new createjs.Tween(controls.target)
         .to(controls.target0, 1000, createjs.Ease.InOut);
     //位置初始化并镜头俯视
     var conPosition = new createjs.Tween(controls.object.position)
-        .to(controls.position0, 1000, createjs.Ease.InOut).to({
+        .to(controls.position0, 1000, createjs.Ease.InOut);
+    //根据编辑状态，更换视角
+    if (_this.editState) {
+        conPosition.to({
             x: 0,
             y: 2000,
             z: 0
         }, 1000, createjs.Ease.InOut);
+    }
+    //镜头聚焦初始化
     mainCamera.lookAt({
         x: 0,
         y: 0,
         z: 0
     });
-    //controls.enableRotate = false; //不允许旋转
+    controls.enableRotate = _this.editState == 1 ? false : true; //不允许旋转
 };
 /**
  * 要素位置还原
@@ -773,6 +881,104 @@ z3D.prototype.commonFunc = {
         sprite.name = parameters.name;
         sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
         _this.addObject(sprite);
+    },
+    /**
+     * 鼠标所在点的屏幕坐标转化成一个Threejs三维坐标
+     */
+    convertTo3DCoordinate: function (clientX, clientY) {
+        var _this = z3DObj;
+        var mv = new THREE.Vector3(
+            (clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1,
+            0.5);
+        mv.unproject(_this.camera); //这句将一个向量转成threejs坐标
+        return new THREE.Vector2(mv.x, mv.y);
+    },
+    /**
+     * 延迟隐藏变换
+     */
+    delayHideTransform: function () {
+        var _this = z3DObj;
+        _this.commonFunc.cancelHideTransorm();
+        _this.commonFunc.hideTransform();
+    },
+    /**
+     * 隐藏变换
+     */
+    hideTransform: function () {
+        var _this = z3DObj;
+        _this.hiding = setTimeout(function () {
+            _this.transformControl.detach(_this.transformControl.object);
+        }, 2500);
+    },
+    /**
+     * 取消隐藏变换
+     */
+    cancelHideTransorm: function () {
+        var _this = z3DObj;
+        if (_this.hiding) clearTimeout(_this.hiding);
+    },
+    /**
+     * 更新曲线状态
+     */
+    updateSplineOutline: function () {
+        var _this = z3DObj;
+        for (var k in _this.splines) {
+            var spline = _this.splines[k];
+            _this.splineMesh = spline.mesh;
+            for (var i = 0; i < _this.ARC_SEGMENTS; i++) {
+                var p = _this.splineMesh.geometry.vertices[i];
+                var t = i / (_this.ARC_SEGMENTS - 1);
+                spline.getPoint(t, p);
+            }
+            _this.splineMesh.geometry.verticesNeedUpdate = true;
+        }
+    },
+    /**
+     * 增加节点，改变曲线状态
+     */
+    addSplineObject: function (position) {
+        var _this = z3DObj;
+        var material = new THREE.MeshLambertMaterial({
+            color: Math.random() * 0xffffff
+        });
+        var geometry = new THREE.BoxGeometry(20, 20, 20);
+        var object = new THREE.Mesh(geometry, material);
+        if (_this.position) {
+            object.position.copy(_this.position);
+        } else {
+            object.position.x = Math.random() * 1000 - 500;
+            object.position.y = Math.random() * 600;
+            object.position.z = Math.random() * 800 - 400;
+        }
+        object.castShadow = true;
+        object.receiveShadow = true;
+        _this.scene.add(object);
+        _this.splineHelperObjects.push(object);
+        return object;
+    },
+    /**
+     * 增加节点
+     */
+    addPoint: function () {
+        var _this = z3DObj;
+        _this.splinePointsLength++;
+        _this.positions.push(_this.commonFunc.addSplineObject().position);
+        if(_this.positions.length>1){
+            _this.commonFunc.updateSplineOutline();
+        }
+    },
+    /**
+     * 移除节点
+     */
+    removePoint: function () {
+        var _this = z3DObj;
+        if (_this.splinePointsLength <= 4) {
+            return;
+        }
+        _this.splinePointsLength--;
+        _this.positions.pop();
+        _this.scene.remove(_this.splineHelperObjects.pop());
+        _this.commonFunc.updateSplineOutline();
     }
 };
 
@@ -789,6 +995,21 @@ z3D.prototype.onDocumentMouseDown = function (event) {
         dbclick = 0;
     }, 500);
     event.preventDefault();
+    //可编辑时
+    if (_this.editState) {
+        console.log(_this.mouseClick);
+        //点击位置生成点位置
+        // var geometry = new THREE.BoxGeometry(20, 20, 20); // 创建一个长方体，用来定义物体的形状
+        // var material = new THREE.MeshBasicMaterial({
+        //     color: 0xff0000
+        // }); // 创建一个材质，用来定义物体的颜色（红色）
+        // var mesh = new THREE.Mesh(geometry, material); // 使用形状和素材，来定义物体
+        // var mouse = _this.commonFunc.convertTo3DCoordinate(event.clientX, event.clientY); //鼠标所在点的屏幕坐标转化成一个Threejs三维坐标
+        // mesh.position.copy(mouse);
+        // _this.scene.add(mesh);
+        //_this.commonFunc.addPoint();
+    }
+    //双击时
     if (dbclick >= 2) {
         _this.raycaster.setFromCamera(_this.mouseClick, _this.camera);
         var intersects = _this.raycaster.intersectObjects(_this.objects); //射线和模型求交，选中一系列直线
