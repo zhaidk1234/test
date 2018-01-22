@@ -945,6 +945,10 @@ z3D.prototype.commonFunc = {
         var object = new THREE.Mesh(geometry, material);
         if (_this.position) {
             object.position.copy(_this.position);
+        } else if (position) {
+            object.position.x = position.x;
+            object.position.y = 0;
+            object.position.z = position.z;
         } else {
             object.position.x = Math.random() * 1000 - 500;
             object.position.y = Math.random() * 600;
@@ -959,11 +963,11 @@ z3D.prototype.commonFunc = {
     /**
      * 增加节点
      */
-    addPoint: function () {
+    addPoint: function (_point) {
         var _this = z3DObj;
         _this.splinePointsLength++;
-        _this.positions.push(_this.commonFunc.addSplineObject().position);
-        if(_this.positions.length>1){
+        _this.positions.push(_this.commonFunc.addSplineObject(_point).position);
+        if (_this.positions.length > 1) {
             _this.commonFunc.updateSplineOutline();
         }
     },
@@ -998,6 +1002,19 @@ z3D.prototype.onDocumentMouseDown = function (event) {
     //可编辑时
     if (_this.editState) {
         console.log(_this.mouseClick);
+        var vector = new THREE.Vector3(); //三维坐标对象
+        vector.set(_this.mouseClick.x, _this.mouseClick.y, 0.5);
+        vector.unproject(_this.camera);
+        var raycaster = new THREE.Raycaster(_this.camera.position, vector.sub(_this.camera.position).normalize());
+        var intersects = raycaster.intersectObjects(_this.scene.children);
+        if (intersects.length > 0) {
+            var selected = intersects[0]; //取第一个物体
+            console.log("x坐标:" + selected.point.x);
+            console.log("y坐标:" + selected.point.y);
+            console.log("z坐标:" + selected.point.z);
+            _this.commonFunc.addPoint(selected.point);
+        }
+
         //点击位置生成点位置
         // var geometry = new THREE.BoxGeometry(20, 20, 20); // 创建一个长方体，用来定义物体的形状
         // var material = new THREE.MeshBasicMaterial({
@@ -1007,7 +1024,7 @@ z3D.prototype.onDocumentMouseDown = function (event) {
         // var mouse = _this.commonFunc.convertTo3DCoordinate(event.clientX, event.clientY); //鼠标所在点的屏幕坐标转化成一个Threejs三维坐标
         // mesh.position.copy(mouse);
         // _this.scene.add(mesh);
-        //_this.commonFunc.addPoint();
+
     }
     //双击时
     if (dbclick >= 2) {
