@@ -246,16 +246,22 @@ z3D.prototype.initMouseCtrl = function () {
 z3D.prototype.initTransformControl = function () {
     var _this = this;
     _this.transformControl = new THREE.TransformControls(_this.camera, _this.renderer.domElement);
-    _this.transformControl.addEventListener('change', _this.animation);
+    //_this.transformControl.addEventListener('change', _this.animation);
+    //_this.transformControl.axisoption = "XZ"; //自定义拖拽参考面
     _this.scene.add(_this.transformControl);
     //隐藏变换相关动作
     _this.transformControl.addEventListener('change', function (e) {
+        _this.editState = _this.editState ? 0 : 1; //切换可编辑状态
+        _this.commonFunc.cancelHideTransorm();
+    });
+    _this.transformControl.addEventListener('hoveroff', function (e) {
         _this.commonFunc.cancelHideTransorm();
     });
     _this.transformControl.addEventListener('mouseDown', function (e) {
         _this.commonFunc.cancelHideTransorm();
     });
     _this.transformControl.addEventListener('mouseUp', function (e) {
+        _this.editState = 0;
         _this.commonFunc.delayHideTransform();
     });
     _this.transformControl.addEventListener('objectChange', function (e) {
@@ -1013,6 +1019,7 @@ z3D.prototype.onDocumentMouseDown = function (event) {
             console.log("y坐标:" + selected.point.y);
             console.log("z坐标:" + selected.point.z);
             _this.commonFunc.addPoint(selected.point);
+            _this.transformControl.axisoption = "XZ";
         }
 
         //点击位置生成点位置
