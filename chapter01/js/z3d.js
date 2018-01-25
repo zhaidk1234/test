@@ -276,7 +276,9 @@ z3D.prototype.initDragControl = function () {
     _this.dragcontrols = new THREE.DragControls(_this.splineHelperObjects, _this.camera, _this.renderer.domElement); //
     _this.dragcontrols.enabled = false;
     _this.dragcontrols.addEventListener('hoveron', function (event) {
-        _this.transformControl.attach(event.object);
+        if (_this.editState != 0) {
+            _this.transformControl.attach(event.object);
+        }
         _this.commonFunc.cancelHideTransorm();
     });
     _this.dragcontrols.addEventListener('hoveroff', function (event) {
@@ -334,6 +336,61 @@ z3D.prototype.animation = function () {
 z3D.prototype.initObject = function () {
 
     var _this = this;
+};
+/**
+ * 读取节点数据
+ */
+z3D.prototype.initLoadDrawPointObject = function (new_positions) {
+    var _this = this;
+    while (new_positions.length > _this.positions.length) {
+        _this.commonFunc.addPoint();
+    }
+    while (new_positions.length < _this.positions.length) {
+        _this.commonFunc.removePoint();
+    }
+    for (var i = 0; i < _this.positions.length; i++) {
+        _this.positions[i].copy(new_positions[i]);
+    }
+    _this.commonFunc.updateSplineOutline();
+};
+/**
+ * 添加基础对象
+ * @param {*} _obj {
+ * show:是否显示，
+ * uuid:编码，
+ * objType：对象类型，
+ * length:长度，
+ * width：宽度,
+ * height:高度，
+ * rotation：旋转角度{direction：旋转基准，degree：旋转角度}
+ * x：x轴位置，
+ * y：y轴位置，
+ * z：z轴位置，
+ * style：样式{skinColor：皮肤样式，skin：六面皮肤细节{up,down,fore,behind,left,right}}
+ * }
+ */
+z3D.prototype.InitAddBaseObject = function (_obj) {
+    var _this = this;
+    if (_obj.show == null || typeof (_obj.show) == 'undefined' || _obj.show) {
+        var _tempObj = null;
+        switch (_obj.objType) {
+            case 'floor':
+                _tempObj = _this.CreateFloor(_this, _obj);
+                _this.addObject(_tempObj);
+                break;
+            case 'cube':
+                _tempObj = _this.createCube(_this, _obj);
+                _this.addObject(_tempObj);
+                break;
+        }
+    }
+};
+/**
+ * 创建连接线
+ */
+z3D.prototype.createLinkLine = function () {
+
+    var _this = this;
 
     /*******
      * Curves
@@ -386,55 +443,6 @@ z3D.prototype.initObject = function () {
     // // 加入到场景中             
     // _this.scene.add(line);
 };
-/**
- * 读取节点数据
- */
-z3D.prototype.initLoadDrawPointObject = function (new_positions) {
-    var _this = this;
-    while (new_positions.length > _this.positions.length) {
-        _this.commonFunc.addPoint();
-    }
-    while (new_positions.length < _this.positions.length) {
-        _this.commonFunc.removePoint();
-    }
-    for (var i = 0; i < _this.positions.length; i++) {
-        _this.positions[i].copy(new_positions[i]);
-    }
-    _this.commonFunc.updateSplineOutline();
-};
-/**
- * 添加基础对象
- * @param {*} _obj {
- * show:是否显示，
- * uuid:编码，
- * objType：对象类型，
- * length:长度，
- * width：宽度,
- * height:高度，
- * rotation：旋转角度{direction：旋转基准，degree：旋转角度}
- * x：x轴位置，
- * y：y轴位置，
- * z：z轴位置，
- * style：样式{skinColor：皮肤样式，skin：六面皮肤细节{up,down,fore,behind,left,right}}
- * }
- */
-z3D.prototype.InitAddBaseObject = function (_obj) {
-    var _this = this;
-    if (_obj.show == null || typeof (_obj.show) == 'undefined' || _obj.show) {
-        var _tempObj = null;
-        switch (_obj.objType) {
-            case 'floor':
-                _tempObj = _this.CreateFloor(_this, _obj);
-                _this.addObject(_tempObj);
-                break;
-            case 'cube':
-                _tempObj = _this.createCube(_this, _obj);
-                _this.addObject(_tempObj);
-                break;
-        }
-    }
-};
-
 /**
  * 创建地板
  * @param {*} _this 
@@ -622,13 +630,23 @@ z3D.prototype.addBtns = function (_btnobjs) {
 
 /**
  * 视角俯视
- * @param {*} 
+ * @param {*} _plan 所控制得平面
  */
-z3D.prototype.viewRecover = function () {
+z3D.prototype.viewRecover = function (_plan) {
     var _this = z3DObj;
     var mainCamera = _this.commonFunc.findObject("mainCamera"); //主摄像机
     var controls = _this.controls; //主控制器
     _this.editState = _this.editState == 0 ? 1 : 0; //更改可编辑状态
+    if (_this.editState == 0) {
+        _this.transformControl.dispose(); //取消拖拽
+        _this.transformControl.detach();
+        _this.dragcontrols.enabled = false; //取消控制
+        _this.commonFunc.cancelEdit();        
+    } else {
+        _this.initTransformControl();
+        _this.transformControl.axisoption = _plan;
+        _this.dragcontrols.enabled = true; //取消控制
+    }
     controls.enableRotate = true; //允许旋转
     //角度初始化
     var conTarget = new createjs.Tween(controls.target)
@@ -669,7 +687,6 @@ z3D.prototype.meshViewRecover = function (_objs, _basedata, _datajson) {
     if (_this.commonFunc.hasObj(_datajson)) {
         dataJsonObjs = _this.commonFunc.hasObj(_datajson.objList) ? _datajson.objList : null;
     }
-
 
     if (baseDataObjs != null) {
         //将基础数据与需添加数据合并
@@ -982,13 +999,35 @@ z3D.prototype.commonFunc = {
      */
     removePoint: function () {
         var _this = z3DObj;
-        if (_this.splinePointsLength <= 4) {
-            return;
-        }
         _this.splinePointsLength--;
         _this.positions.pop();
         _this.scene.remove(_this.splineHelperObjects.pop());
-        _this.commonFunc.updateSplineOutline();
+        if (_this.positions.length > 1) {
+            _this.commonFunc.updateSplineOutline();
+        }else{
+            _this.scene.remove(_this.splineMesh);
+        }
+    },
+    /**
+     * 移除节点
+     */
+    cancelEdit: function () {
+        var _this = z3DObj;
+        console.log(_this.positions);
+        
+        if(_this.positions.length>0){
+            for(var i=_this.positions.length;i>0;i--){
+                _this.commonFunc.removePoint();
+            }
+        }
+
+        // //初始化曲线参数
+        // _this.splineOutline = null; //曲线输出线
+        // _this.splineHelperObjects = []; //曲线辅助数组
+        // _this.splineMesh = null; //曲线
+        // _this.splines = {}; //曲线对象
+        // _this.splinePointsLength = 4; //曲线初始化节点数量
+        // _this.positions = []; //
     }
 };
 
@@ -1015,23 +1054,8 @@ z3D.prototype.onDocumentMouseDown = function (event) {
         var intersects = raycaster.intersectObjects(_this.scene.children);
         if (intersects.length > 0) {
             var selected = intersects[0]; //取第一个物体
-            console.log("x坐标:" + selected.point.x);
-            console.log("y坐标:" + selected.point.y);
-            console.log("z坐标:" + selected.point.z);
             _this.commonFunc.addPoint(selected.point);
-            _this.transformControl.axisoption = "XZ";
         }
-
-        //点击位置生成点位置
-        // var geometry = new THREE.BoxGeometry(20, 20, 20); // 创建一个长方体，用来定义物体的形状
-        // var material = new THREE.MeshBasicMaterial({
-        //     color: 0xff0000
-        // }); // 创建一个材质，用来定义物体的颜色（红色）
-        // var mesh = new THREE.Mesh(geometry, material); // 使用形状和素材，来定义物体
-        // var mouse = _this.commonFunc.convertTo3DCoordinate(event.clientX, event.clientY); //鼠标所在点的屏幕坐标转化成一个Threejs三维坐标
-        // mesh.position.copy(mouse);
-        // _this.scene.add(mesh);
-
     }
     //双击时
     if (dbclick >= 2) {

@@ -104,7 +104,8 @@ var baseBtns = [{
         btnimg: "images/icons/connection.png",
         event: function () {
             //视角俯视事件
-            z3DObj.viewRecover();
+            z3DObj.viewRecover("XZ"); //控制哪个页面
+            z3DObj.createLinkLine(); //创建连接线
         }
     },
     {
