@@ -55,6 +55,7 @@ z3D.prototype.initz3D = function (_fId, _option, _basedata, _datajson) {
     this.splines = {}; //曲线对象
     this.splinePointsLength = 4; //曲线初始化节点数量
     this.positions = []; //
+    this.wallpoints = []; //墙体点位数据
 
     this.mouseClick = new THREE.Vector2();
     this.raycaster = new THREE.Raycaster();
@@ -382,6 +383,9 @@ z3D.prototype.InitAddBaseObject = function (_obj) {
                 _tempObj = _this.createCube(_this, _obj);
                 _this.addObject(_tempObj);
                 break;
+            case 'wall':
+                _this.CreateWall(_this, _obj);
+                break;
         }
     }
 };
@@ -455,6 +459,264 @@ z3D.prototype.CreateFloor = function (_this, _obj) {
     var _cube = _this.createCube(_this, _obj);
     return _cube;
 };
+z3D.prototype.CreateWallData = function (_wallpoints) {
+    var _this = this;
+    //墙体模板
+    var wallbasedata = {
+        show: true,
+        uuid: "00000000-0000-0000-0000-000000000002",
+        name: 'wall',
+        objType: 'wall',
+        thick: 20,
+        length: 100,
+        height: 240,
+        wallData: [],
+        style: {
+            skinColor: 0x8ac9e2
+        }
+    };
+    if (_wallpoints.length > 0) {
+        //创建墙体基本数据
+        for (var i = 0; i < _wallpoints.length - 1; i++) {
+            var calRes = _this.commonFunc.calculateAngle(_wallpoints[i], _wallpoints[i + 1]);
+            //每一面墙的数据
+            var wall = {
+                uuid: _this.commonFunc.guid,
+                name: 'wall' + i,
+                thick: 20,
+                height: 240,
+                skin: {
+                    skin_up: {
+                        skinColor: 0xdddddd,
+                    },
+                    skin_down: {
+                        skinColor: 0xdddddd,
+                    },
+                    skin_fore: {
+                        skinColor: 0xb0cee0,
+                    },
+                    skin_behind: {
+                        skinColor: 0xb0cee0,
+                    },
+                    skin_left: {
+                        skinColor: 0xdeeeee,
+                    },
+                    skin_right: {
+                        skinColor: 0xb0cee0,
+                    }
+                },
+                startDot: {
+                    x: calRes.p1.x,
+                    y: 120,
+                    z: calRes.p1.z
+                },
+                endDot: {
+                    x: calRes.p2.x,
+                    y: 120,
+                    z: calRes.p2.z
+                },
+                rotation: [{
+                    direction: 'y',
+                    degree: calRes.angleA
+                }] //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
+            };
+            wallbasedata.wallData.push(wall);
+        }
+    }
+    _this.InitAddBaseObject(wallbasedata);
+
+};
+/**
+ * 创建墙体
+ * @param {*} _this 
+ * @param {*} _obj 
+ */
+z3D.prototype.CreateWall = function (_this, _obj) {
+    if (_this == null) {
+        _this = this;
+    }
+    var _commonThick = _obj.thick || 40; //墙体厚度
+    var _commonLength = _obj.length || 100; //墙体厚度
+    var _commonHeight = _obj.height || 300; //强体高度
+    var _commonSkin = _obj.style.skinColor || 0x98750f;
+    //建立墙面
+    $.each(_obj.wallData, function (index, wallobj) {
+        var wallLength = _commonLength;
+        var wallWidth = wallobj.thick || _commonThick;
+        var positionX = ((wallobj.startDot.x || 0) + (wallobj.endDot.x || 0)) / 2;
+        var positionY = ((wallobj.startDot.y || 0) + (wallobj.endDot.y || 0)) / 2;
+        var positionZ = ((wallobj.startDot.z || 0) + (wallobj.endDot.z || 0)) / 2;
+        //z相同 表示x方向为长度
+        if (wallobj.startDot.z == wallobj.endDot.z) {
+            wallLength = Math.abs(wallobj.startDot.x - wallobj.endDot.x);
+            wallWidth = wallobj.thick || _commonThick;
+        } else if (wallobj.startDot.x == wallobj.endDot.x) {
+            wallLength = wallobj.thick || _commonThick;
+            wallWidth = Math.abs(wallobj.startDot.z - wallobj.endDot.z);
+        }
+        var cubeobj = {
+            length: wallLength,
+            width: wallWidth,
+            height: wallobj.height || _commonHeight,
+            rotation: wallobj.rotation,
+            x: positionX,
+            y: positionY,
+            z: positionZ,
+            uuid: wallobj.uuid,
+            name: wallobj.name,
+            style: {
+                skinColor: _commonSkin,
+                skin: wallobj.skin
+            }
+        }
+        var _cube = _this.createCube(_this, cubeobj);
+        if (_this.commonFunc.hasObj(wallobj.childrens) && wallobj.childrens.length > 0) {
+            $.each(wallobj.childrens, function (index, walchildobj) {
+                var _newobj = null;
+                _newobj = _this.CreateHole(_this, walchildobj);
+                _cube = _this.mergeModel(_this, walchildobj.op, _cube, _newobj);
+            });
+        }
+        _this.addObject(_cube);
+    });
+};
+/**
+ * 挖洞
+ * @param {*} _this 
+ * @param {*} _obj 
+ */
+z3D.prototype.CreateHole = function (_this, _obj) {
+    if (_this == null) {
+        _this = this;
+    }
+    var _commonThick = 40; //墙体厚度
+    var _commonLength = 100; //墙体厚度
+    var _commonHeight = 300; //强体高度
+    var _commonSkin = 0x98750f;
+    //建立墙面
+    var wallLength = _commonLength;
+    var wallWidth = _obj.thick || _commonThick;
+    var positionX = ((_obj.startDot.x || 0) + (_obj.endDot.x || 0)) / 2;
+    var positionY = ((_obj.startDot.y || 0) + (_obj.endDot.y || 0)) / 2;
+    var positionZ = ((_obj.startDot.z || 0) + (_obj.endDot.z || 0)) / 2;
+    //z相同 表示x方向为长度
+    if (_obj.startDot.z == _obj.endDot.z) {
+        wallLength = Math.abs(_obj.startDot.x - _obj.endDot.x);
+        wallWidth = _obj.thick || _commonThick;
+    } else if (_obj.startDot.x == _obj.endDot.x) {
+        wallLength = _obj.thick || _commonThick;
+        wallWidth = Math.abs(_obj.startDot.z - _obj.endDot.z);
+    }
+    var cubeobj = {
+        length: wallLength,
+        width: wallWidth,
+        height: _obj.height || _commonHeight,
+        rotation: _obj.rotation,
+        x: positionX,
+        uuid: _obj.uuid,
+        name: _obj.name,
+        y: positionY,
+        z: positionZ,
+        style: {
+            skinColor: _commonSkin,
+            skin: _obj.skin
+        }
+    }
+    var _cube = _this.createCube(_this, cubeobj);
+    return _cube;
+};
+/**
+ * 模型合并 使用ThreeBSP插件mergeOP计算方式 -表示减去 +表示加上 
+ * @param {*} _this 
+ * @param {*} mergeOP 
+ * @param {*} _fobj 
+ * @param {*} _sobj 
+ */
+z3D.prototype.mergeModel = function (_this, mergeOP, _fobj, _sobj) {
+    if (_this == null) {
+        _this = this;
+    }
+    var fobjBSP = new ThreeBSP(_fobj);
+    var sobjBSP = new ThreeBSP(_sobj);
+    // var sobjBSP = new ThreeBSP(_sobj);
+    var resultBSP = null;
+    if (mergeOP == '-') {
+        resultBSP = fobjBSP.subtract(sobjBSP);
+    } else if (mergeOP == '+') {
+        var subMesh = new THREE.Mesh(_sobj);
+        _sobj.updateMatrix();
+        _fobj.geometry.merge(_sobj.geometry, _sobj.matrix);
+        return _fobj;
+        // resultBSP = fobjBSP.union(sobjBSP);
+    } else if (mergeOP == '&') { //交集
+        resultBSP = fobjBSP.intersect(sobjBSP);
+    } else {
+        _this.addObject(_sobj);
+        return _fobj;
+    }
+    var cubeMaterialArray = [];
+    for (var i = 0; i < 1; i++) {
+        cubeMaterialArray.push(new THREE.MeshLambertMaterial({
+            //map: _this.createSkin(128, 128, { imgurl: '../datacenterdemo/res2/'+(i%11)+'.jpg' }),
+            vertexColors: THREE.FaceColors
+        }));
+    }
+    var cubeMaterials = new THREE.MeshFaceMaterial(cubeMaterialArray);
+    var result = resultBSP.toMesh(cubeMaterials);
+    result.material.shading = THREE.FlatShading;
+    result.geometry.computeFaceNormals();
+    result.geometry.computeVertexNormals();
+    result.uuid = _fobj.uuid + mergeOP + _sobj.uuid;
+    result.name = _fobj.name + mergeOP + _sobj.name;
+    result.material.needsUpdate = true;
+    result.geometry.buffersNeedUpdate = true;
+    result.geometry.uvsNeedUpdate = true;
+    var _foreFaceSkin = null;
+    for (var i = 0; i < result.geometry.faces.length; i++) {
+        var _faceset = false;
+        for (var j = 0; j < _fobj.geometry.faces.length; j++) {
+            if (result.geometry.faces[i].vertexNormals[0].x === _fobj.geometry.faces[j].vertexNormals[0].x &&
+                result.geometry.faces[i].vertexNormals[0].y === _fobj.geometry.faces[j].vertexNormals[0].y &&
+                result.geometry.faces[i].vertexNormals[0].z === _fobj.geometry.faces[j].vertexNormals[0].z &&
+                result.geometry.faces[i].vertexNormals[1].x === _fobj.geometry.faces[j].vertexNormals[1].x &&
+                result.geometry.faces[i].vertexNormals[1].y === _fobj.geometry.faces[j].vertexNormals[1].y &&
+                result.geometry.faces[i].vertexNormals[1].z === _fobj.geometry.faces[j].vertexNormals[1].z &&
+                result.geometry.faces[i].vertexNormals[2].x === _fobj.geometry.faces[j].vertexNormals[2].x &&
+                result.geometry.faces[i].vertexNormals[2].y === _fobj.geometry.faces[j].vertexNormals[2].y &&
+                result.geometry.faces[i].vertexNormals[2].z === _fobj.geometry.faces[j].vertexNormals[2].z) {
+                result.geometry.faces[i].color.setHex(_fobj.geometry.faces[j].color.r * 0xff0000 + _fobj.geometry.faces[j].color.g * 0x00ff00 + _fobj.geometry.faces[j].color.b * 0x0000ff);
+                _foreFaceSkin = _fobj.geometry.faces[j].color.r * 0xff0000 + _fobj.geometry.faces[j].color.g * 0x00ff00 + _fobj.geometry.faces[j].color.b * 0x0000ff;
+                _faceset = true;
+            }
+        }
+        if (_faceset == false) {
+            for (var j = 0; j < _sobj.geometry.faces.length; j++) {
+                if (result.geometry.faces[i].vertexNormals[0].x === _sobj.geometry.faces[j].vertexNormals[0].x &&
+                    result.geometry.faces[i].vertexNormals[0].y === _sobj.geometry.faces[j].vertexNormals[0].y &&
+                    result.geometry.faces[i].vertexNormals[0].z === _sobj.geometry.faces[j].vertexNormals[0].z &&
+                    result.geometry.faces[i].vertexNormals[1].x === _sobj.geometry.faces[j].vertexNormals[1].x &&
+                    result.geometry.faces[i].vertexNormals[1].y === _sobj.geometry.faces[j].vertexNormals[1].y &&
+                    result.geometry.faces[i].vertexNormals[1].z === _sobj.geometry.faces[j].vertexNormals[1].z &&
+                    result.geometry.faces[i].vertexNormals[2].x === _sobj.geometry.faces[j].vertexNormals[2].x &&
+                    result.geometry.faces[i].vertexNormals[2].y === _sobj.geometry.faces[j].vertexNormals[2].y &&
+                    result.geometry.faces[i].vertexNormals[2].z === _sobj.geometry.faces[j].vertexNormals[2].z &&
+                    result.geometry.faces[i].vertexNormals[2].z === _sobj.geometry.faces[j].vertexNormals[2].z) {
+                    result.geometry.faces[i].color.setHex(_sobj.geometry.faces[j].color.r * 0xff0000 + _sobj.geometry.faces[j].color.g * 0x00ff00 + _sobj.geometry.faces[j].color.b * 0x0000ff);
+                    _foreFaceSkin = _sobj.geometry.faces[j].color.r * 0xff0000 + _sobj.geometry.faces[j].color.g * 0x00ff00 + _sobj.geometry.faces[j].color.b * 0x0000ff;
+                    _faceset = true;
+                }
+            }
+        }
+        if (_faceset == false) {
+            result.geometry.faces[i].color.setHex(_foreFaceSkin);
+        }
+        // result.geometry.faces[i].materialIndex = i
+    }
+    result.castShadow = true;
+    result.receiveShadow = true;
+    return result;
+};
+
 
 /**
  * 创建盒子体
@@ -641,7 +903,8 @@ z3D.prototype.viewRecover = function (_plan) {
         _this.transformControl.dispose(); //取消拖拽
         _this.transformControl.detach();
         _this.dragcontrols.enabled = false; //取消控制
-        _this.commonFunc.cancelEdit();        
+        _this.CreateWallData(_this.positions); //创建墙体信息
+        _this.commonFunc.cancelEdit();
     } else {
         _this.initTransformControl();
         _this.transformControl.axisoption = _plan;
@@ -958,8 +1221,10 @@ z3D.prototype.commonFunc = {
     },
     /**
      * 增加节点，改变曲线状态
+     * @param {*} _point 点的位置
+     * @param {*} _isClose 是否为闭合点
      */
-    addSplineObject: function (position) {
+    addSplineObject: function (position, _isClose) {
         var _this = z3DObj;
         var material = new THREE.MeshLambertMaterial({
             color: Math.random() * 0xffffff
@@ -970,7 +1235,7 @@ z3D.prototype.commonFunc = {
             object.position.copy(_this.position);
         } else if (position) {
             object.position.x = position.x;
-            object.position.y = 0;
+            object.position.y = 10;
             object.position.z = position.z;
         } else {
             object.position.x = Math.random() * 1000 - 500;
@@ -979,17 +1244,22 @@ z3D.prototype.commonFunc = {
         }
         object.castShadow = true;
         object.receiveShadow = true;
-        _this.scene.add(object);
+        if (!_isClose) {
+            _this.scene.add(object);
+        }
         _this.splineHelperObjects.push(object);
         return object;
     },
     /**
      * 增加节点
+     * @param {*} _point 点的位置
+     * @param {*} _isClose 是否为闭合点
      */
-    addPoint: function (_point) {
+    addPoint: function (_point, _isClose) {
         var _this = z3DObj;
         _this.splinePointsLength++;
-        _this.positions.push(_this.commonFunc.addSplineObject(_point).position);
+        _this.positions.push(_this.commonFunc.addSplineObject(_point, _isClose).position);
+
         if (_this.positions.length > 1) {
             _this.commonFunc.updateSplineOutline();
         }
@@ -1004,7 +1274,7 @@ z3D.prototype.commonFunc = {
         _this.scene.remove(_this.splineHelperObjects.pop());
         if (_this.positions.length > 1) {
             _this.commonFunc.updateSplineOutline();
-        }else{
+        } else {
             _this.scene.remove(_this.splineMesh);
         }
     },
@@ -1014,20 +1284,65 @@ z3D.prototype.commonFunc = {
     cancelEdit: function () {
         var _this = z3DObj;
         console.log(_this.positions);
-        
-        if(_this.positions.length>0){
-            for(var i=_this.positions.length;i>0;i--){
+        if (_this.positions.length > 0) {
+            for (var i = _this.positions.length; i > 0; i--) {
                 _this.commonFunc.removePoint();
             }
         }
-
-        // //初始化曲线参数
-        // _this.splineOutline = null; //曲线输出线
-        // _this.splineHelperObjects = []; //曲线辅助数组
-        // _this.splineMesh = null; //曲线
-        // _this.splines = {}; //曲线对象
-        // _this.splinePointsLength = 4; //曲线初始化节点数量
-        // _this.positions = []; //
+        //初始化曲线参数
+        _this.splineOutline = null; //曲线输出线
+        _this.splineHelperObjects = []; //曲线辅助数组
+        _this.splineMesh = null; //曲线
+        _this.splines = {}; //曲线对象
+        _this.splinePointsLength = 4; //曲线初始化节点数量
+        _this.positions = []; //
+    },
+    /**
+     * 根据两点计算角度 
+     */
+    calculateAngle: function (_pointOne, _pointTwo) {
+        //两点坐标
+        var x1 = _pointOne.x;
+        var y1 = _pointOne.z;
+        var x2 = _pointTwo.x;
+        var y2 = _pointTwo.z;
+        //计算中心点坐标
+        var x0 = (x1 + x2) / 2;
+        var y0 = (y1 + y2) / 2;
+        //两点间距离
+        var d = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+        //输出点
+        var p1 = {
+            x: x0 - d / 2,
+            y: _pointOne.y,
+            z: y0
+        };
+        var p2 = {
+            x: x0 + d / 2,
+            y: _pointTwo.y,
+            z: y0
+        };
+        //直角三角形三边边长
+        var a = Math.abs(y0 - y1);
+        var b = Math.abs(x0 - x1);
+        var c = d / 2;
+        var angleA = Math.acos((Math.pow(b, 2) + Math.pow(c, 2) - Math.pow(a, 2)) / (2 * b * c));
+        //返回值为
+        var res = {
+            p1: p1,
+            p2: p2,
+            angleA: angleA
+        };
+        return res;
+    },
+    /**
+     * 生成UUID
+     */
+    guid: function () {
+        function S4() {
+            return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+        }
+        return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
     }
 };
 
@@ -1042,19 +1357,25 @@ z3D.prototype.onDocumentMouseDown = function (event) {
     _this.mouseClick.y = -(event.clientY / _this.height) * 2 + 1;
     setTimeout(function () {
         dbclick = 0;
-    }, 500);
+    }, 300);
     event.preventDefault();
     //可编辑时
     if (_this.editState) {
         console.log(_this.mouseClick);
-        var vector = new THREE.Vector3(); //三维坐标对象
-        vector.set(_this.mouseClick.x, _this.mouseClick.y, 0.5);
-        vector.unproject(_this.camera);
-        var raycaster = new THREE.Raycaster(_this.camera.position, vector.sub(_this.camera.position).normalize());
-        var intersects = raycaster.intersectObjects(_this.scene.children);
-        if (intersects.length > 0) {
-            var selected = intersects[0]; //取第一个物体
-            _this.commonFunc.addPoint(selected.point);
+        if (event.button == 0) { //鼠标左键
+            var vector = new THREE.Vector3(); //三维坐标对象
+            vector.set(_this.mouseClick.x, _this.mouseClick.y, 0.5);
+            vector.unproject(_this.camera);
+            var raycaster = new THREE.Raycaster(_this.camera.position, vector.sub(_this.camera.position).normalize());
+            var intersects = raycaster.intersectObjects(_this.scene.children);
+            if (intersects.length > 0) {
+                var selected = intersects[0]; //取第一个物体
+                _this.commonFunc.addPoint(selected.point, false);
+            }
+        } else if (event.button == 2) { //鼠标右键
+            if (_this.positions.length > 0) {
+                _this.commonFunc.addPoint(_this.positions[0], true);
+            }
         }
     }
     //双击时
