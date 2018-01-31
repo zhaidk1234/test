@@ -2055,3 +2055,78 @@ z3D.prototype.onDocumentMouseMove = function (event) {
         _this.INTERSECTED = null;
     }
 };
+/**
+ * 打开右大门
+ * @param {*} _obj 
+ * @param {*} func 
+ */
+z3D.prototype.openRightDoor = function (_obj, func) {
+    var doorstate = "close";
+    var tempobj = null;
+    if (_obj.doorState != null && typeof (_obj.doorState) != 'undefined') {
+        doorstate = _obj.doorState;
+        tempobj = _obj.parent;
+    } else {
+        console.log("add parent");
+        var _objparent = _obj.parent;
+        tempobj = new THREE.Object3D();
+        tempobj.position.set(_obj.position.x - _obj.geometry.parameters.width / 2, _obj.position.y, _obj.position.z);
+        _obj.position.set(_obj.geometry.parameters.width / 2, 0, 0);
+        tempobj.add(_obj);
+        _objparent.add(tempobj);
+    }
+    _obj.doorState = (doorstate == "close" ? "open" : "close");
+    new createjs.Tween(tempobj.rotation).to({
+        y: (doorstate == "close" ? 0.25 * 2 * Math.PI : 0 * 2 * Math.PI)
+    }, 10000, createjs.Ease.elasticOut);
+};
+/**
+ * 打开左大门
+ * @param {*} _obj 
+ * @param {*} func 
+ */
+z3D.prototype.openLeftDoor = function (_obj, func) {
+    var doorstate = "close";
+    var tempobj = null;
+    if (_obj.doorState != null && typeof (_obj.doorState) != 'undefined') {
+        doorstate = _obj.doorState;
+        tempobj = _obj.parent;
+    } else {
+        console.log("add parent");
+        var _objparent = _obj.parent;
+        tempobj = new THREE.Object3D();
+        tempobj.position.set(_obj.position.x + _obj.geometry.parameters.width / 2, _obj.position.y, _obj.position.z);
+        _obj.position.set(-_obj.geometry.parameters.width / 2, 0, 0);
+        tempobj.add(_obj);
+        _objparent.add(tempobj);
+    }
+    _obj.doorState = (doorstate == "close" ? "open" : "close");
+    new createjs.Tween(tempobj.rotation).to({
+        y: (doorstate == "close" ? -0.25 * 2 * Math.PI : 0 * 2 * Math.PI)
+    }, 10000, createjs.Ease.elasticOut);
+};
+/**
+ * 打开机柜门
+ * @param {*} _obj 
+ * @param {*} func 
+ */
+z3D.prototype.opcabinetdoor = function (_obj, func) {
+    var doorstate = "close";
+    var tempobj = null;
+    if (_obj.doorState != null && typeof (_obj.doorState) != 'undefined') {
+        doorstate = _obj.doorState;
+        tempobj = _obj.parent;
+    } else {
+        console.log("add parent");
+        var _objparent = _obj.parent;
+        tempobj = new THREE.Object3D();
+        tempobj.position.set(_obj.position.x, _obj.position.y, _obj.position.z + _obj.geometry.parameters.depth / 2);
+        _obj.position.set(0, 0, -_obj.geometry.parameters.depth / 2);
+        tempobj.add(_obj);
+        _objparent.add(tempobj);
+    }
+    _obj.doorState = (doorstate == "close" ? "open" : "close");
+    new createjs.Tween(tempobj.rotation).to({
+        y: (doorstate == "close" ? 0.25 * 2 * Math.PI : 0 * 2 * Math.PI)
+    }, 1000, createjs.Ease.linear);
+}

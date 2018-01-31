@@ -628,7 +628,7 @@ var baseObjects = [
         blending: false,
     },
 ];
-
+//机柜
 var eCData = [
     //机柜1-1 --原型
     {
@@ -654,9 +654,207 @@ var eCData = [
     },
 ];
 
+//服务器
+var serverData = [ //主机1
+    {
+        show: true,
+        uuid: "",
+        name: 'equipment_card_1',
+        objType: 'cube',
+        length: 60,
+        width: 65,
+        height: 10,
+        x: -100,
+        y: 105,
+        z: -180,
+        rotation: [{
+            direction: 'y',
+            degree: 0.5 * Math.PI
+        }], //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
+        style: {
+            skinColor: 0xff0000,
+            skin: {
+                skin_up: {
+                    skinColor: 0xff0000,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_down: {
+                    skinColor: 0xff0000,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_fore: {
+                    skinColor: 0xff0000,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_behind: {
+                    skinColor: 0xff0000,
+                    imgurl: "images/server2.jpg",
+                },
+                skin_left: {
+                    skinColor: 0xff0000,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_right: {
+                    skinColor: 0xff0000,
+                    imgurl: "images/rack_inside.jpg",
+                }
+            }
+        }
+    },
+    //主机2
+    {
+        show: true,
+        uuid: "",
+        name: 'equipment_card_2',
+        objType: 'cube',
+        length: 60,
+        width: 65,
+        height: 20,
+        x: -100,
+        y: 120,
+        z: -180,
+        rotation: [{
+            direction: 'y',
+            degree: 0.5 * Math.PI
+        }], //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
+        style: {
+            skinColor: 0x92630b,
+            skin: {
+                skin_up: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_down: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_fore: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_behind: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/server2.jpg",
+                },
+                skin_left: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_right: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/rack_inside.jpg",
+                }
+            }
+        }
+    },
+    //主机3
+    {
+        show: true,
+        uuid: "",
+        name: 'equipment_card_3',
+        objType: 'cube',
+        length: 60,
+        width: 65,
+        height: 30,
+        x: -100,
+        y: 145,
+        z: -180,
+        rotation: [{
+            direction: 'y',
+            degree: 0.5 * Math.PI
+        }], //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
+        style: {
+            skinColor: 0x92630b,
+            skin: {
+                skin_up: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_down: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_fore: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_behind: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/server3.jpg",
+                },
+                skin_left: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/rack_inside.jpg",
+                },
+                skin_right: {
+                    skinColor: 0x92630b,
+                    imgurl: "images/rack_inside.jpg",
+                }
+            }
+        }
+    },
+];
+
 //基础事件内容
 var baseEvents = {
-    dbclick: [],
+    dbclick: [{
+            obj_name: "doorRight",
+            obj_uuid: "",
+            obj_event: function (_obj) {
+                z3DObj.openRightDoor(_obj, function () {});
+            }
+        },
+        {
+            obj_name: "doorLeft",
+            obj_uuid: "",
+            obj_event: function (_obj) {
+                z3DObj.openLeftDoor(_obj, function () {});
+            }
+        },
+        {
+            obj_name: "cabinetdoor3_1",
+            obj_uuid: "",
+            obj_event: function (_obj) {
+                z3DObj.opcabinetdoor(_obj);
+            }
+        },
+        {
+            findObject: function (_objname) { //查找某一类符合名称的对象
+                if (_objname.indexOf("cabinet") >= 0 && _objname.indexOf("door") >= 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+            obj_uuid: "",
+            obj_event: function (_obj) {
+                z3DObj.opcabinetdoor(_obj);
+            }
+        },
+        {
+            findObject: function (_objname) { //查找某一类符合名称的对象
+                if (_objname.indexOf("equipment") >= 0 && _objname.indexOf("card") >= 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+            obj_uuid: "",
+            obj_event: function (_obj) {
+                var cardstate = "in";
+                if (_obj.cardstate != null && typeof (_obj.cardstate) != 'undefined') {
+                    cardstate = _obj.cardstate;
+                } else {
+                    _obj.cardstate = "out";
+                }
+                new createjs.Tween(_obj.position).to({
+                    x: (cardstate == "in" ? _obj.position.x - 50 : _obj.position.x + 50),
+                }, 1000, createjs.Ease.linear).call(function () {
+                    _obj.cardstate = cardstate == "in" ? "out" : "in";
+                });
+            }
+        }
+    ],
     mouseDown: [],
     mouseUp: [],
     mouseMove: [{
