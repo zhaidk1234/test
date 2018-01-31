@@ -386,6 +386,21 @@ z3D.prototype.InitAddBaseObject = function (_obj) {
             case 'wall':
                 _this.CreateWall(_this, _obj);
                 break;
+            case 'plane':
+                _tempObj = _this.createPlaneGeometry(_this, _obj);
+                _this.addObject(_tempObj);
+                break;
+            case 'glasses':
+                _this.createGlasses(_this, _obj);
+                break;
+            case 'emptyCabinet':
+                _tempObj = _this.createEmptyCabinet(_this, _obj);
+                _this.addObject(_tempObj);
+                break;
+            case 'cloneObj':
+                _tempObj = _this.commonFunc.cloneObj(_obj.copyfrom, _obj);
+                _this.addObject(_tempObj);
+                break;
         }
     }
 };
@@ -757,7 +772,7 @@ z3D.prototype.createCube = function (_this, _obj) {
         //透明度
         if (_obj.style.skin.opacity != null && typeof (_obj.style.skin.opacity) != 'undefined') {
             skin_opacity = _obj.style.skin.opacity;
-            console.log(skin_opacity);
+            //console.log(skin_opacity);
         }
         //上
         skin_up_obj = _this.createSkinOptionOnj(_this, _length, _width, _obj.style.skin.skin_up, cubeGeometry, 4);
@@ -807,6 +822,312 @@ z3D.prototype.createCube = function (_this, _obj) {
 
     return cube;
 };
+/**
+ * 创建二维平面-长方形
+ * @param {*} _this 
+ * @param {*} _obj
+ * options={           
+ *        width:0,
+ *        height:0,
+ *        pic:"",
+ *        transparent:true,
+ *        opacity:1
+ *        blending:false,
+ *    position: { x:,y:,z:},
+ *    rotation: { x:,y:,z:},
+ *    }
+ */
+z3D.prototype.createPlaneGeometry = function (_this, _obj) {
+
+    var options = _obj;
+    if (typeof options.pic == "string") { //传入的材质是图片路径，使用 textureloader加载图片作为材质
+        var loader = new THREE.TextureLoader();
+        loader.setCrossOrigin(this.crossOrigin);
+        var texture = loader.load(options.pic, function () {}, undefined, function () {});
+    } else {
+        var texture = new THREE.CanvasTexture(options.pic)
+    }
+    var MaterParam = { //材质的参数
+        map: texture,
+        overdraw: true,
+        side: THREE.FrontSide,
+        //blending: THREE.AdditiveBlending,
+        transparent: options.transparent,
+        //needsUpdate:true,
+        //premultipliedAlpha: true,
+        opacity: options.opacity
+    }
+    if (options.blending) {
+        MaterParam.blending = THREE.AdditiveBlending //使用饱和度叠加渲染
+    }
+    var plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(options.width, options.height, 1, 1),
+        new THREE.MeshBasicMaterial(MaterParam)
+    );
+    plane.position.x = options.position.x;
+    plane.position.y = options.position.y;
+    plane.position.z = options.position.z;
+    plane.rotation.x = options.rotation.x;
+    plane.rotation.y = options.rotation.y;
+    plane.rotation.z = options.rotation.z;
+    return plane;
+}
+/**
+ * 创建空柜子
+ * @param {*} _this 
+ * @param {*} _obj
+ * 参数demo
+ * var _obj = {
+ *        show: true,
+ *        name: 'test',
+ *        uuid: 'test',
+ *        rotation: [{
+ *            direction: 'y',
+ *            degree: 0.25 * Math.PI
+ *        }], //旋转     uuid:'',
+ *        objType: 'emptyCabinet',
+ *        transparent: true,
+ *        size: {
+ *            length: 50,
+ *            width: 60,
+ *            height: 200,
+ *            thick: 2
+ *        },
+ *        position: {
+ *            x: -220,
+ *            y: 105,
+ *            z: -150
+ *        },
+ *        doors: {
+ *            doorType: 'lr', // ud门 lr左右门
+ *            doorSize: [1],
+ *            skins: [{
+ *                skinColor: 0x333333,
+ *                skin_fore: {
+ *                    imgurl: "../datacenterdemo/res/rack_door_back.jpg",
+ *                },
+ *                skin_behind: {
+ *                    imgurl: "../datacenterdemo/res/rack_front_door.jpg",
+ *                }
+ *            }]
+ *        },
+ *        skin: {
+ *            skinColor: 0xdddddd,
+ *            skin: {
+ *                skinColor: 0xdddddd,
+ *                skin_up: {
+ *                    imgurl: "../datacenterdemo/res/rack_door_back.jpg"
+ *                },
+ *                skin_down: {
+ *                    imgurl: "../datacenterdemo/res/rack_door_back.jpg"
+ *                },
+ *                skin_fore: {
+ *                    imgurl: "../datacenterdemo/res/rack_door_back.jpg"
+ *                },
+ *                skin_behind: {
+ *                    imgurl: "../datacenterdemo/res/rack_door_back.jpg"
+ *                },
+ *                skin_left: {
+ *                    imgurl: "../datacenterdemo/res/rack_door_back.jpg"
+ *                },
+ *                skin_right: {
+ *                    imgurl: "../datacenterdemo/res/rack_door_back.jpg"
+ *                },
+ *            }
+ *        }
+ *    };
+ */
+z3D.prototype.createEmptyCabinet = function (_this, _obj) {
+    var _this = z3DObj;
+    //创建五个面
+    //上
+    var upobj = {
+        show: true,
+        uuid: "",
+        name: '',
+        objType: 'cube',
+        length: _obj.size.length + 1,
+        width: _obj.size.width,
+        height: _obj.size.thick + 1,
+        x: _obj.position.x + 1,
+        y: _obj.position.y + (_obj.size.height / 2 - _obj.size.thick / 2),
+        z: _obj.position.z,
+        style: {
+            skinColor: _obj.skin.skinColor,
+            skin: _obj.skin.skin_up.skin
+        }
+    };
+    var upcube = _this.createCube(_this, upobj);
+    //左
+    var leftobj = {
+        show: true,
+        uuid: "",
+        name: '',
+        objType: 'cube',
+        length: _obj.size.length,
+        width: _obj.size.thick,
+        height: _obj.size.height,
+        x: 0,
+        y: -(_obj.size.height / 2 - _obj.size.thick / 2),
+        z: 0 - (_obj.size.width / 2 - _obj.size.thick / 2) - 1,
+        style: {
+            skinColor: _obj.skin.skinColor,
+            skin: _obj.skin.skin_left.skin
+        }
+    };
+    var leftcube = _this.createCube(_this, leftobj);
+    var Cabinet = _this.mergeModel(_this, '+', upcube, leftcube);
+    //右
+    var Rightobj = {
+        show: true,
+        uuid: "",
+        name: '',
+        objType: 'cube',
+        length: _obj.size.length,
+        width: _obj.size.thick,
+        height: _obj.size.height,
+        x: 0,
+        y: -(_obj.size.height / 2 - _obj.size.thick / 2),
+        z: (_obj.size.width / 2 - _obj.size.thick / 2) + 1,
+        style: {
+            skinColor: _obj.skin.skinColor,
+            skin: _obj.skin.skin_right.skin
+        }
+    }
+    var Rightcube = _this.createCube(_this, Rightobj);
+    Cabinet = _this.mergeModel(_this, '+', Cabinet, Rightcube);
+    //后
+    var Behidobj = {
+        show: true,
+        uuid: "",
+        name: '',
+        objType: 'cube',
+        length: _obj.size.thick,
+        width: _obj.size.width,
+        height: _obj.size.height,
+        x: (_obj.size.length / 2 - _obj.size.thick / 2) + 1,
+        y: -(_obj.size.height / 2 - _obj.size.thick / 2),
+        z: 0,
+        style: {
+            skinColor: _obj.skin.skinColor,
+            skin: _obj.skin.skin_behind.skin
+        }
+    };
+    var Behindcube = _this.createCube(_this, Behidobj);
+    Cabinet = _this.mergeModel(_this, '+', Cabinet, Behindcube);
+    //下
+    var Downobj = {
+        show: true,
+        uuid: "",
+        name: '',
+        objType: 'cube',
+        length: _obj.size.length + 1,
+        width: _obj.size.width,
+        height: _obj.size.thick,
+        x: -1,
+        y: -(_obj.size.height - _obj.size.thick) - 1,
+        z: 0,
+        style: {
+            skinColor: _obj.skin.skinColor,
+            skin: _obj.skin.skin_down.skin
+        }
+    };
+    var Downcube = _this.createCube(_this, Downobj);
+    Cabinet = _this.mergeModel(_this, '+', Cabinet, Downcube);
+
+    var tempobj = new THREE.Object3D();
+    tempobj.add(Cabinet);
+    tempobj.name = _obj.name;
+    tempobj.uuid = _obj.uuid;
+    Cabinet.name = _obj.shellname,
+        _this.objects.push(Cabinet);
+    tempobj.position = Cabinet.position;
+    //门
+    if (_obj.doors != null && typeof (_obj.doors) != 'undefined') {
+        var doors = _obj.doors;
+        if (doors.skins.length == 1) { //单门
+            var singledoorobj = {
+                show: true,
+                uuid: "",
+                name: _obj.doors.doorname[0],
+                objType: 'cube',
+                length: _obj.size.thick,
+                width: _obj.size.width,
+                height: _obj.size.height,
+                x: _obj.position.x - _obj.size.length / 2 - _obj.size.thick / 2,
+                y: _obj.position.y,
+                z: _obj.position.z,
+                style: {
+                    skinColor: _obj.doors.skins[0].skinColor,
+                    skin: _obj.doors.skins[0]
+                }
+            };
+            var singledoorcube = _this.createCube(_this, singledoorobj);
+            _this.objects.push(singledoorcube);
+            tempobj.add(singledoorcube);
+        } else if (doors.skins.length > 1) { //多门
+
+
+        }
+
+    }
+    if (_obj.rotation != null && typeof (_obj.rotation) != 'undefined' && _obj.rotation.length > 0) {
+        $.each(_obj.rotation, function (index, rotation_obj) {
+            var rotationState = rotation_obj.state || "word";
+            if (rotationState == "word") { //世界坐标
+                switch (rotation_obj.direction) {
+                    case 'x':
+                        tempobj.rotateX(rotation_obj.degree);
+                        break;
+                    case 'y':
+                        tempobj.rotateY(rotation_obj.degree);
+                        break;
+                    case 'z':
+                        tempobj.rotateZ(rotation_obj.degree);
+                        break;
+                    case 'arb':
+                        tempobj.rotateOnAxis(new THREE.Vector3(rotation_obj.degree[0], rotation_obj.degree[1], rotation_obj.degree[2]), rotation_obj.degree[3]);
+                        break;
+                }
+            } else if (rotationState == "local") {
+                var cp0 = tempobj.children[0].position;
+                var cp1 = tempobj.children[1].position;
+                switch (rotation_obj.direction) {
+                    case 'x':
+                        tempobj.rotateX(rotation_obj.degree);
+                        break;
+                    case 'y':
+                        var cp2 = _this.commonFunc.rotationPoint(cp1, cp0, rotation_obj.degree, "y");
+                        tempobj.children[0].position.set(cp0.x, cp0.y, cp0.z);
+                        tempobj.children[0].rotateY(rotation_obj.degree);
+                        tempobj.children[1].position.set(cp2.x, cp2.y, cp2.z);
+                        tempobj.children[1].rotateY(rotation_obj.degree);
+                        break;
+                    case 'z':
+                        tempobj.rotateZ(rotation_obj.degree);
+                        break;
+                    case 'arb':
+                        tempobj.rotateOnAxis(new THREE.Vector3(rotation_obj.degree[0], rotation_obj.degree[1], rotation_obj.degree[2]), rotation_obj.degree[3]);
+                        break;
+                }
+            }
+        });
+    }
+    return tempobj;
+}
+/**
+ * 创建玻璃
+ * @param {*} _this 
+ * @param {*} _obj 
+ */
+z3D.prototype.createGlasses = function (_this, _obj) {
+    var _this = z3DObj;
+    var tmpobj = _this.createPlaneGeometry(_this, _obj);
+    _this.addObject(tmpobj);
+    _obj.rotation.y = Math.PI + _obj.rotation.y;
+    var tmpobj2 = _this.createPlaneGeometry(_this, _obj);
+    _this.addObject(tmpobj2);
+};
 
 /**
  * 创建皮肤参数对象
@@ -839,7 +1160,12 @@ z3D.prototype.createSkinOptionOnj = function (_this, flength, fwidth, _obj, _cub
         };
     }
 };
-//创建皮肤
+/**
+ * 创建皮肤
+ * @param {*} flength 
+ * @param {*} fwidth 
+ * @param {*} _obj 
+ */
 z3D.prototype.createSkin = function (flength, fwidth, _obj) {
     var imgwidth = 128,
         imgheight = 128;
@@ -966,8 +1292,6 @@ z3D.prototype.meshViewRecover = function (_objs, _basedata, _datajson) {
             }
         });
     }
-
-
 };
 
 /**
@@ -1084,13 +1408,15 @@ z3D.prototype.commonFunc = {
     setSkinColor: function (_objname, _color) {
         var _this = z3DObj;
         var _obj = _this.commonFunc.findObject(_objname);
-        if (_this.commonFunc.hasObj(_obj.material.emissive)) {
-            _obj.material.emissive.setHex(_color);
-        } else if (_this.commonFunc.hasObj(_obj.material)) {
-            if (_obj.material.length > 0) {
-                $.each(_obj.material, function (index, obj) {
-                    obj.emissive.setHex(_color);
-                });
+        if (_obj != null) {
+            if (_this.commonFunc.hasObj(_obj.material.emissive)) {
+                _obj.material.emissive.setHex(_color);
+            } else if (_this.commonFunc.hasObj(_obj.material)) {
+                if (_obj.material.length > 0) {
+                    $.each(_obj.material, function (index, obj) {
+                        obj.emissive.setHex(_color);
+                    });
+                }
             }
         }
     },
@@ -1336,6 +1662,45 @@ z3D.prototype.commonFunc = {
         return res;
     },
     /**
+     * 根据旋转点，中心点，旋转角度，基准坐标轴，计算旋转点围绕中心点旋转某角度后的坐标()
+     * @param
+     */
+    rotationPoint: function (_rotate, _center, _angle, _axis) {
+        var _this = z3DObj;
+        var point = null;
+        switch (_axis) {
+            case 'y':
+                point = _this.commonFunc.rotationPointY(_rotate, _center, _angle);
+                break;
+        }
+        return point;
+    },
+    /**
+     * 根据旋转点，中心点，旋转角度，基于y轴计算旋转点围绕中心点旋转某角度后的坐标()
+     * @param
+     */
+    rotationPointY: function (_rotate, _center, _angle) {
+        var _this = z3DObj;
+        var point = null;
+        //两点坐标
+        var cx = _center.x;
+        var cz = _center.z;
+        var x1 = _rotate.x - cx;
+        var z1 = _rotate.z - cz;
+        //角度
+        var a = _angle;
+        //计算旋转后坐标
+        var x2 = (x1 * Math.cos(a) + z1 * Math.sin(a)) + cx;
+        var z2 = (z1 * Math.cos(a) - x1 * Math.sin(a)) + cz;
+
+        point = {
+            x: x2,
+            y: _rotate.y,
+            z: z2
+        };
+        return point;
+    },
+    /**
      * 生成UUID
      */
     guid: function () {
@@ -1424,7 +1789,8 @@ z3D.prototype.onDocumentMouseMove = function (event) {
                 }
             }
             _this.INTERSECTED = intersects[0].object;
-            _this.INTERSECTED.currentHex = _this.INTERSECTED.material[0].emissive.getHex();
+            var interSectedMaterial = _this.INTERSECTED.material[0] || _this.INTERSECTED.material;
+            _this.INTERSECTED.currentHex = _this.commonFunc.hasObj(interSectedMaterial.emissive) ? interSectedMaterial.emissive.getHex() : interSectedMaterial.color.getHex();
             if (_this.commonFunc.hasObj(_this.INTERSECTED.name)) {
                 if (_this.basedata.eventList != null && _this.basedata.eventList.mouseMove != null && _this.basedata.eventList.mouseMove.length > 0) {
                     $.each(_this.basedata.eventList.mouseMove, function (index, _obj) {

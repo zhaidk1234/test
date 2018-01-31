@@ -54,11 +54,11 @@ var baseObjects = [
         height: 220,
         rotation: [{
             direction: 'y',
-            degree: 0.3 * Math.PI
+            degree: -0.8 * Math.PI
         }], //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
-        x: -420,
+        x: 520,
         y: 110,
-        z: 370,
+        z: -380,
         style: {
             skinColor: 0xfefefe,
             skin: {
@@ -67,10 +67,8 @@ var baseObjects = [
                 },
             }
         }
-    }
-];
-//墙体
-var wallbasedata = 
+    },
+    //墙体
     {
         show: true,
         uuid: "00000000-0000-0000-0000-000000000002",
@@ -80,7 +78,7 @@ var wallbasedata =
         length: 100,
         height: 240,
         wallData: [{ //wall1
-                uuid: "",
+                uuid: "00000000-0000-0000-0000-000000000003",
                 name: 'wall1',
                 thick: 20,
                 height: 240,
@@ -105,22 +103,23 @@ var wallbasedata =
                     }
                 },
                 startDot: {
-                    x: -500,
+                    x: -600,
                     y: 120,
-                    z: -350
+                    z: -450
                 },
                 endDot: {
-                    x: 500,
+                    x: 600,
                     y: 120,
-                    z: -350
+                    z: -450
                 },
                 rotation: [{
                     direction: 'x',
                     degree: 0
                 }] //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
+
             },
             { //wall2
-                uuid: "",
+                uuid: "00000000-0000-0000-0000-000000000014",
                 name: 'wall2',
                 thick: 20,
                 height: 240,
@@ -145,18 +144,390 @@ var wallbasedata =
                     }
                 },
                 startDot: {
-                    x: -500,
+                    x: -600,
                     y: 120,
                     z: 450
                 },
                 endDot: {
-                    x: 500,
+                    x: 600,
                     y: 120,
                     z: 450
                 },
+                childrens: [{
+                        op: '-',
+                        show: true,
+                        uuid: "00000000-0000-0000-0000-000000000004",
+                        name: 'doorhole',
+                        objType: 'doorhole',
+                        thick: 20,
+                        height: 220,
+                        startDot: {
+                            x: -410,
+                            y: 110,
+                            z: 450
+                        },
+                        endDot: {
+                            x: -190,
+                            y: 110,
+                            z: 450
+                        },
+                        skin: {
+                            skin_up: {
+                                skinColor: 0xffdddd,
+                            },
+                            skin_down: {
+                                skinColor: 0xdddddd,
+                            },
+                            skin_fore: {
+                                skinColor: 0xffdddd,
+                            },
+                            skin_behind: {
+                                skinColor: 0xffdddd,
+                            },
+                            skin_left: {
+                                skinColor: 0xffdddd,
+                            },
+                            skin_right: {
+                                skinColor: 0xffdddd,
+                            }
+                        },
+                    },
+                    {
+                        op: '-',
+                        show: true,
+                        uuid: "00000000-0000-0000-0000-000000000005",
+                        name: 'windowHole',
+                        objType: 'windowHole',
+                        thick: 20,
+                        height: 160,
+                        startDot: {
+                            x: -50,
+                            y: 130,
+                            z: 450
+                        },
+                        endDot: {
+                            x: 450,
+                            y: 130,
+                            z: 450
+                        }
+                    },
+                    {
+                        show: true,
+                        name: 'windowCaseBottom',
+                        uuid: "00000000-0000-0000-0000-000000000006",
+                        objType: 'cube',
+                        thick: 30,
+                        height: 10,
+                        startDot: {
+                            x: -50,
+                            y: 50,
+                            z: 450
+                        },
+                        endDot: {
+                            x: 450,
+                            y: 50,
+                            z: 450
+                        },
+                        skin: {
+                            skin_up: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_down: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_fore: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_behind: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_left: {
+                                skinColor: 0xd0eef0,
+                            },
+                            skin_right: {
+                                skinColor: 0xd0eef0,
+                            }
+                        },
+                    },
+
+                    {
+                        show: true,
+                        uuid: "00000000-0000-0000-0000-000000000007",
+                        name: 'doorCaseRight',
+                        objType: 'cube',
+                        thick: 24,
+                        height: 220,
+                        startDot: {
+                            x: -410,
+                            y: 110,
+                            z: 450
+                        },
+                        endDot: {
+                            x: -405,
+                            y: 110,
+                            z: 450
+                        },
+                        skin: {
+                            skin_up: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_down: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_fore: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_behind: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_left: {
+                                skinColor: 0xd0eef0,
+                            },
+                            skin_right: {
+                                skinColor: 0xd0eef0,
+                            }
+                        },
+                    },
+                    {
+                        show: true,
+                        name: 'doorCaseLeft',
+                        uuid: "00000000-0000-0000-0000-000000000008",
+                        objType: 'cube',
+                        thick: 24,
+                        height: 220,
+                        startDot: {
+                            x: -190,
+                            y: 110,
+                            z: 450
+                        },
+                        endDot: {
+                            x: -195,
+                            y: 110,
+                            z: 450
+                        },
+                        skin: {
+                            skin_up: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_down: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_fore: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_behind: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_left: {
+                                skinColor: 0xd0eef0,
+                            },
+                            skin_right: {
+                                skinColor: 0xd0eef0,
+                            }
+                        },
+                    },
+                    {
+                        show: true,
+                        name: 'doorCaseTop',
+                        uuid: "00000000-0000-0000-0000-000000000009",
+                        objType: 'cube',
+                        thick: 24,
+                        height: 5,
+                        startDot: {
+                            x: -190,
+                            y: 220,
+                            z: 450
+                        },
+                        endDot: {
+                            x: -410,
+                            y: 220,
+                            z: 450
+                        },
+                        skin: {
+                            skin_up: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_down: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_fore: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_behind: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_left: {
+                                skinColor: 0xd0eef0,
+                            },
+                            skin_right: {
+                                skinColor: 0xd0eef0,
+                            }
+                        },
+                    },
+                    {
+                        show: true,
+                        name: 'doorCaseBottom',
+                        uuid: "00000000-0000-0000-0000-000000000010",
+                        objType: 'cube',
+                        thick: 24,
+                        height: 5,
+                        startDot: {
+                            x: -190,
+                            y: 5,
+                            z: 450
+                        },
+                        endDot: {
+                            x: -410,
+                            y: 5,
+                            z: 450
+                        },
+                        skin: {
+                            skin_up: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_down: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_fore: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_behind: {
+                                skinColor: 0xc0dee0,
+                            },
+                            skin_left: {
+                                skinColor: 0xd0eef0,
+                            },
+                            skin_right: {
+                                skinColor: 0xd0eef0,
+                            }
+                        },
+                    },
+                    {
+                        show: true,
+                        name: 'doorLeft',
+                        uuid: "00000000-0000-0000-0000-000000000011",
+                        objType: 'cube',
+                        thick: 4,
+                        height: 210,
+                        startDot: {
+                            x: -196,
+                            y: 112,
+                            z: 450
+                        },
+                        endDot: {
+                            x: -300,
+                            y: 112,
+                            z: 450
+                        },
+                        skin: {
+                            opacity: 0.1,
+                            skin_up: {
+                                skinColor: 0x51443e,
+                            },
+                            skin_down: {
+                                skinColor: 0x51443e,
+                            },
+                            skin_fore: {
+                                skinColor: 0x51443e,
+                            },
+                            skin_behind: {
+                                skinColor: 0x51443e,
+                            },
+                            skin_left: {
+                                skinColor: 0x51443e,
+                                imgurl: "images/door_left.png",
+                            },
+                            skin_right: {
+                                skinColor: 0x51443e,
+                                imgurl: "images/door_right.png",
+                            }
+                        },
+                    },
+                    {
+                        show: true,
+                        name: 'doorRight',
+                        uuid: "00000000-0000-0000-0000-000000000012",
+                        objType: 'cube',
+                        thick: 4,
+                        height: 210,
+                        startDot: {
+                            x: -300,
+                            y: 112,
+                            z: 450
+                        },
+                        endDot: {
+                            x: -404,
+                            y: 112,
+                            z: 450
+                        },
+                        skin: {
+                            opacity: 0.1,
+                            skin_up: {
+                                skinColor: 0x51443e,
+                            },
+                            skin_down: {
+                                skinColor: 0x51443e,
+                            },
+                            skin_fore: {
+                                skinColor: 0x51443e,
+                            },
+                            skin_behind: {
+                                skinColor: 0x51443e,
+                            },
+                            skin_left: {
+                                skinColor: 0x51443e,
+                                imgurl: "images/door_right.png",
+                            },
+                            skin_right: {
+                                skinColor: 0x51443e,
+                                imgurl: "images/door_left.png",
+                            }
+                        },
+                    },
+                    {
+                        show: true,
+                        name: 'doorControl',
+                        uuid: "00000000-0000-0000-0000-000000000013",
+                        objType: 'cube',
+                        thick: 10,
+                        height: 40,
+                        startDot: {
+                            x: -120,
+                            y: 160,
+                            z: 465
+                        },
+                        endDot: {
+                            x: -160,
+                            y: 160,
+                            z: 465
+                        },
+                        skin: {
+                            opacity: 0.1,
+                            skin_up: {
+                                skinColor: 0x333333,
+                            },
+                            skin_down: {
+                                skinColor: 0x333333,
+                            },
+                            skin_fore: {
+                                skinColor: 0x333333,
+                            },
+                            skin_behind: {
+                                skinColor: 0x333333,
+                            },
+                            skin_left: {
+                                skinColor: 0x333333,
+                            },
+                            skin_right: {
+                                skinColor: 0x333333,
+                                imgurl: "images/doorControl.jpg",
+                            }
+                        },
+                    },
+                ]
             },
             { //wall3
-                uuid: "",
+                uuid: "00000000-0000-0000-0000-000000000015",
                 name: 'wall3',
                 thick: 20,
                 height: 240,
@@ -181,18 +552,18 @@ var wallbasedata =
                     }
                 },
                 startDot: {
-                    x: 490,
+                    x: 590,
                     y: 120,
-                    z: -355
+                    z: -455
                 },
                 endDot: {
-                    x: 490,
+                    x: 590,
                     y: 120,
                     z: 455
                 },
             },
             { //wall4
-                uuid: "",
+                uuid: "00000000-0000-0000-0000-000000000016",
                 name: 'wall4',
                 thick: 20,
                 height: 240,
@@ -217,12 +588,12 @@ var wallbasedata =
                     }
                 },
                 startDot: {
-                    x: -490,
+                    x: -590,
                     y: 120,
-                    z: -355
+                    z: -455
                 },
                 endDot: {
-                    x: -490,
+                    x: -590,
                     y: 120,
                     z: 455
                 },
@@ -232,7 +603,119 @@ var wallbasedata =
             skinColor: 0x8ac9e2
         }
 
-    };
+    },
+    //玻璃
+    {
+        show: true,
+        name: 'windowGlass1',
+        uuid: "",
+        objType: 'glasses',
+        width: 500,
+        height: 160,
+        pic: "images/glass.png",
+        transparent: true,
+        opacity: 0.1,
+        position: {
+            x: 200,
+            y: 130,
+            z: 450
+        },
+        rotation: {
+            x: 0,
+            y: 0 * Math.PI,
+            z: 0
+        },
+        blending: false,
+    },
+    //机柜1-1 --原型
+    {
+        show: true,
+        name: 'cabinet1_1',
+        shellname: 'cabinet1_1_shell',
+        uuid: '',
+        rotation: [{
+            state:"local", //旋转坐标系（自身local，世界word）
+            direction: 'y', //旋转坐标轴
+            degree: 0.9* Math.PI //Math.PI 等于180度,沿坐标轴逆时针旋转
+        }], //基于坐标轴旋转,
+        objType: 'emptyCabinet',
+        transparent: true,
+        size: {
+            length: 66,
+            width: 70,
+            height: 200,
+            thick: 2
+        },
+        position: {
+            x: 300,
+            y: 105,
+            z: -180
+        },
+        doors: {
+            doorType: 'lr', // ud上下门 lr左右门 单门可以缺省
+            doorSize: [1],
+            doorname: ['cabinet1_1_door_01'],
+            skins: [{
+                skinColor: 0x333333,
+                skin_fore: {
+                    imgurl: "images/rack_door_back.jpg",
+                },
+                skin_behind: {
+                    imgurl: "images/rack_front_door.jpg",
+                }
+            }]
+        },
+        skin: {
+            skinColor: 0xff0000,
+            skin_up: {
+                skin: {
+                    skinColor: 0xff0000,
+                    skin_up: {
+                        imgurl: "images/rack_door_back.jpg"
+                    },
+                    skin_down: {
+                        imgurl: "images/rack_door_back.jpg"
+                    },
+                    skin_fore: {
+                        skinColor: 0xff0000,
+                        imgurl: "images/rack_door_back.jpg"
+                    },
+                    skin_behind: {
+                        skinColor: 0xff0000,
+                        imgurl: "images/rack_door_back.jpg"
+                    },
+                    skin_left: {
+                        imgurl: "images/rack_door_back.jpg"
+                    },
+                    skin_right: {
+                        imgurl: "images/rack_door_back.jpg"
+                    },
+                }
+            },
+            skin_down: {
+                skin: {
+                    skinColor: 0x333333,
+                }
+            },
+            skin_left: {
+                skin: {
+                    skinColor: 0x333333,
+                }
+            },
+            skin_right: {
+                skin: {
+                    skinColor: 0x333333,
+                }
+            },
+            skin_behind: {
+                skin: {
+                    skinColor: 0x333333,
+                }
+            }
+        }
+    },
+];
+
 
 //基础事件内容
 var baseEvents = {
