@@ -103,9 +103,10 @@ z3D.prototype.start = function () {
     });
     _this.initMouseCtrl(); //鼠标控制器
     _this.initTransformControl(); //变换控制器
-    _this.initDragControl(); //拖动控制器
+    //_this.initDragControl(); //拖动控制器
     _this.initResize(_this.fId);
     _this.addBtns(_this.basedata.btns); //创建按钮
+
     _this.animation(); //循环渲染界面
 };
 
@@ -185,6 +186,9 @@ z3D.prototype.initLight = function () {
     var light = new THREE.DirectionalLight(0xFF0000, 1.0, 0);
     light.position.set(100, 100, 200);
     _this.scene.add(light);
+    // //方向光辅助线
+    // var dlightHelper = new THREE.DirectionalLightHelper(light, 500); // 50 is helper size
+    // _this.scene.add(dlightHelper);
 
     //环境光
     var light1 = new THREE.AmbientLight(0xcccccc);
@@ -198,6 +202,9 @@ z3D.prototype.initLight = function () {
     light2.position.set(0, 350, 0);
     light2.castShadow = true; //表示这个光是可以产生阴影的
     _this.scene.add(light2);
+    // //点光源辅助线
+    // var plightHelper = new THREE.PointLightHelper(light2, 500); // 50 is helper size
+    // _this.scene.add(plightHelper);
 };
 
 /**
@@ -206,8 +213,31 @@ z3D.prototype.initLight = function () {
 z3D.prototype.initHelpGrid = function () {
     var _this = this;
     if (_this.option.showHelpGrid) {
+        //网格辅助线
         var helpGrid = new THREE.GridHelper(1600, 50);
         _this.scene.add(helpGrid);
+
+        //坐标轴辅助线
+        var axesHelper = new THREE.AxesHelper(800); // 500 is size
+        _this.scene.add(axesHelper);
+
+        //向量辅助线
+        // var directionV3 = new THREE.Vector3(1, 0, 1);
+        // var originV3 = new THREE.Vector3(0, 200, 0);
+        // var arrowHelper = new THREE.ArrowHelper(directionV3, originV3, 100, 0xff0000, 20, 10); // 100 is length, 20 and 10 are head length and width
+        // _this.scene.add(arrowHelper);
+
+        //对象辅助线
+        // $.each(_this.objects, function (index, _obj) {
+        //     if (_obj.type != "PerspectiveCamera") {      
+        //         var bboxHelper = new THREE.BoundingBoxHelper(_obj, 0x999999);
+        //         _this.scene.add(bboxHelper);
+        //     }
+        // });
+
+        //相机辅助线
+        // var cameraHelper = new THREE.CameraHelper(_this.camera);
+        // _this.scene.add(cameraHelper);
     }
 };
 
@@ -252,7 +282,7 @@ z3D.prototype.initTransformControl = function () {
     _this.scene.add(_this.transformControl);
     //隐藏变换相关动作
     _this.transformControl.addEventListener('change', function (e) {
-        _this.editState = _this.editState ? 0 : 1; //切换可编辑状态
+        //_this.editState = _this.editState ? 0 : 1; //切换可编辑状态
         _this.commonFunc.cancelHideTransorm();
     });
     _this.transformControl.addEventListener('hoveroff', function (e) {
@@ -262,7 +292,7 @@ z3D.prototype.initTransformControl = function () {
         _this.commonFunc.cancelHideTransorm();
     });
     _this.transformControl.addEventListener('mouseUp', function (e) {
-        _this.editState = 0;
+        // _this.editState = 0;
         _this.commonFunc.delayHideTransform();
     });
     _this.transformControl.addEventListener('objectChange', function (e) {
@@ -272,14 +302,16 @@ z3D.prototype.initTransformControl = function () {
 /**
  * 拖动控制器
  */
-z3D.prototype.initDragControl = function () {
+z3D.prototype.initDragControl = function (_objs) {
     var _this = this;
-    _this.dragcontrols = new THREE.DragControls(_this.splineHelperObjects, _this.camera, _this.renderer.domElement); //
+    var objs = _objs || _this.splineHelperObjects;
+    _this.dragcontrols = new THREE.DragControls(objs, _this.camera, _this.renderer.domElement); //
     _this.dragcontrols.enabled = false;
     _this.dragcontrols.addEventListener('hoveron', function (event) {
-        if (_this.editState != 0) {
-            _this.transformControl.attach(event.object);
-        }
+        console.log(event.object);
+        //if (_this.editState != 0) {
+        _this.transformControl.attach(event.object.parent);
+        //}
         _this.commonFunc.cancelHideTransorm();
     });
     _this.dragcontrols.addEventListener('hoveroff', function (event) {
@@ -886,7 +918,7 @@ z3D.prototype.createEmptyCabinetData = function (_CabinetObj) {
     if (_CabinetObj.length > 0) {
         //创建墙体基本数据
         for (var i = 0; i < _CabinetObj.length; i++) {
-            var cabinetName='cabinet' + _this.commonFunc.guid();
+            var cabinetName = 'cabinet' + _this.commonFunc.guid();
             //每一面墙的数据
             var cabinet = {
                 show: _CabinetObj[i].show || true,
@@ -1149,9 +1181,10 @@ z3D.prototype.createEmptyCabinet = function (_this, _obj) {
     tempobj.add(Cabinet);
     tempobj.name = _obj.name;
     tempobj.uuid = _obj.uuid;
-    Cabinet.name = _obj.shellname,
-        _this.objects.push(Cabinet);
+    Cabinet.name = _obj.shellname;
+    _this.objects.push(Cabinet);
     tempobj.position = Cabinet.position;
+
     //门
     if (_obj.doors != null && typeof (_obj.doors) != 'undefined') {
         var doors = _obj.doors;
@@ -1177,10 +1210,11 @@ z3D.prototype.createEmptyCabinet = function (_this, _obj) {
             tempobj.add(singledoorcube);
         } else if (doors.skins.length > 1) { //多门
 
-
         }
-
     }
+    //重绘坐标点，只针对基于XZ平面
+    _this.commonFunc.redrawCenter(tempobj);
+
     if (_obj.rotation != null && typeof (_obj.rotation) != 'undefined' && _obj.rotation.length > 0) {
         $.each(_obj.rotation, function (index, rotation_obj) {
             var rotationState = rotation_obj.state || "word";
@@ -1328,11 +1362,14 @@ z3D.prototype.addBtns = function (_btnobjs) {
 
 /**
  * 视角俯视
+ * @param {*} _plan 所控制得平面
+ * 
  */
-z3D.prototype.viewRecover = function () {
+z3D.prototype.viewRecover = function (_plan) {
     var _this = z3DObj;
     var mainCamera = _this.commonFunc.findObject("mainCamera"); //主摄像机
     var controls = _this.controls; //主控制器
+    z3D.prototype.changeEditState(_plan);
     controls.enableRotate = true; //允许旋转
     //角度初始化
     var conTarget = new createjs.Tween(controls.target)
@@ -1359,20 +1396,21 @@ z3D.prototype.viewRecover = function () {
 /**
  * 改变编辑状态
  * @param {*} _plan 所控制得平面
+ * 
  */
 z3D.prototype.changeEditState = function (_plan) {
-    _this.editState = _this.editState == 0 ? 1 : 0; //更改可编辑状态
-    if (_this.editState == 0) {
-        _this.transformControl.dispose(); //取消拖拽
-        _this.transformControl.detach();
-        _this.dragcontrols.enabled = false; //取消控制
-        _this.CreateWallData(_this.positions); //创建墙体信息
-        _this.commonFunc.cancelEdit();
-    } else {
-        _this.initTransformControl();
-        _this.transformControl.axisoption = _plan;
-        _this.dragcontrols.enabled = true; //取消控制
-    }
+    var _this = z3DObj;
+    // _this.editState = _this.editState == 0 ? 1 : 0; //更改可编辑状态
+    // if (_this.editState == 0) {
+    //     _this.transformControl.dispose(); //取消拖拽
+    //     _this.transformControl.detach();
+    //     _this.dragcontrols.enabled = false; //取消控制
+    //     _this.CreateWallData(_this.positions); //创建墙体信息
+    //     _this.commonFunc.cancelEdit();
+    // } else {
+    _this.initTransformControl();
+    _this.transformControl.axisoption = _plan;
+    // }
 };
 /**
  * 要素位置还原
@@ -1814,6 +1852,24 @@ z3D.prototype.commonFunc = {
             z: z2
         };
         return point;
+    },
+    /**
+     * 重绘Object3D类中心点,只针对基于XZ平面
+     */
+    redrawCenter: function (_obj3d) {
+        var _this = z3DObj;
+        //对象原中心点
+        var cp0 = {};
+        cp0.x = _obj3d.children[0].position.x;
+        cp0.y = _obj3d.children[0].position.y;
+        cp0.z = _obj3d.children[0].position.z;
+
+        $.each(_obj3d.children, function (index, _obj) {
+            _obj.translateX(-cp0.x);
+            //_obj.translateY(-cp0.y);
+            _obj.translateZ(-cp0.z);
+        });
+        _obj3d.position.set(cp0.x, 0, cp0.z);
     },
     /**
      * 生成UUID

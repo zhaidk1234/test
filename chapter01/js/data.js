@@ -629,7 +629,7 @@ var baseObjects = [
     },
 ];
 
-var eCData= [ 
+var eCData = [
     //机柜1-1 --原型
     {
         name: 'cabinet1_1',
@@ -688,9 +688,17 @@ var baseBtns = [{
         btnimg: "images/icons/connection.png",
         event: function () {
             //视角俯视事件
-            z3DObj.viewRecover(); //控制哪个页面
-            z3DObj.createEmptyCabinetData(eCData);
-            //z3DObj.changeEditState("XZ"); //控制哪个页面
+            z3DObj.viewRecover("XZ"); //控制哪个页面
+            //找到所有机柜
+            var ecObjs = [];
+            $.each(z3DObj.objects, function (index, _obj) {
+                if (_obj.type == "Object3D") {
+                    $.each(_obj.children, function (index, _o) {
+                        ecObjs.push(_o);
+                    });
+                }
+            });
+            z3DObj.initDragControl(ecObjs);
             //z3DObj.createLinkLine(); //创建连接线
         }
     },
