@@ -687,18 +687,6 @@ var baseBtns = [{
         btnTitle: "编辑墙壁",
         btnimg: "images/icons/connection.png",
         event: function () {
-            //视角俯视事件
-            z3DObj.viewRecover("XZ"); //控制哪个页面
-            //找到所有机柜
-            var ecObjs = [];
-            $.each(z3DObj.objects, function (index, _obj) {
-                if (_obj.type == "Object3D") {
-                    $.each(_obj.children, function (index, _o) {
-                        ecObjs.push(_o);
-                    });
-                }
-            });
-            z3DObj.initDragControl(ecObjs);
             //z3DObj.createLinkLine(); //创建连接线
         }
     },
@@ -712,7 +700,21 @@ var baseBtns = [{
         btnid: "btn_edit",
         btnTitle: "拖拽机柜",
         btnimg: "images/icons/edit.png",
-        event: function () {}
+        event: function () {
+            //视角俯视事件
+            z3DObj.viewRecover("XZ"); //控制哪个页面
+            //找到所有机柜
+            var ecObjs = [];
+            $.each(z3DObj.objects, function (index, _obj) {
+                if (_obj.type == "Object3D") {
+                    $.each(_obj.children, function (index, _o) {
+                        ecObjs.push(_o);
+                    });
+                }
+            });
+            //注册移动事件
+            z3DObj.initDragControl(ecObjs);
+        }
     }
 ];
 

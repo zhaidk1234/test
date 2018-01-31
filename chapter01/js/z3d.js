@@ -70,6 +70,7 @@ z3D.prototype.initz3D = function (_fId, _option, _basedata, _datajson) {
     this.datajson = _datajson; //需添加数据
 
     this.editState = 0; //编辑状态，0为不可编辑，1为可编辑
+    this.moveState = 0; //机柜移动状态，0为不可移动，1为可移动
     this.hiding = null; //拖动组件隐藏状态
 
     var _this = this;
@@ -291,6 +292,7 @@ z3D.prototype.initTransformControl = function () {
     });
     _this.transformControl.addEventListener('mouseUp', function (e) {
         // _this.editState = 0;
+        console.log(_this.transformControl.object.position);
         _this.commonFunc.delayHideTransform();
     });
     _this.transformControl.addEventListener('objectChange', function (e) {
@@ -348,7 +350,9 @@ z3D.prototype.initDragControl = function (_objs) {
     _this.dragcontrols.enabled = false;
     _this.dragcontrols.addEventListener('hoveron', function (event) {
         //if (_this.editState != 0) {
-        _this.transformControl.attach(event.object.parent);
+        if (_this.moveState != 0) { //可移动状态 
+            _this.transformControl.attach(event.object.parent);
+        }
         //}
         _this.commonFunc.cancelHideTransorm();
     });
@@ -1440,15 +1444,17 @@ z3D.prototype.changeEditState = function (_plan) {
     var _this = z3DObj;
     // _this.editState = _this.editState == 0 ? 1 : 0; //更改可编辑状态
     // if (_this.editState == 0) {
-    //     _this.transformControl.dispose(); //取消拖拽
-    //     _this.transformControl.detach();
-    //     _this.dragcontrols.enabled = false; //取消控制
-    //     _this.CreateWallData(_this.positions); //创建墙体信息
-    //     _this.commonFunc.cancelEdit();
-    // } else {
-    _this.initTransformControl();
-    _this.transformControl.axisoption = _plan;
-    // }
+    _this.moveState = _this.moveState == 0 ? 1 : 0; //更改可移动状态
+    if (_this.moveState == 0) {
+        _this.transformControl.dispose(); //取消拖拽
+        _this.transformControl.detach();
+        _this.dragcontrols.enabled = false; //取消控制
+        _this.CreateWallData(_this.positions); //创建墙体信息
+        _this.commonFunc.cancelEdit();
+    } else {
+        _this.initTransformControl();
+        _this.transformControl.axisoption = _plan;
+    }
 };
 /**
  * 要素位置还原
@@ -1832,6 +1838,11 @@ z3D.prototype.commonFunc = {
         _this.splines = {}; //曲线对象
         _this.splinePointsLength = 4; //曲线初始化节点数量
         _this.positions = []; //
+        //隐藏坐标点
+        var cDiv = document.getElementById("Coordinates");
+        if (cDiv != null) {
+            cDiv.style.display = 'none';
+        }
     },
     /**
      * 根据两点计算角度 
