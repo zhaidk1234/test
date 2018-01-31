@@ -474,6 +474,10 @@ z3D.prototype.CreateFloor = function (_this, _obj) {
     var _cube = _this.createCube(_this, _obj);
     return _cube;
 };
+/**
+ * 创建墙体数据
+ * @param {*} _wallpoints 
+ */
 z3D.prototype.CreateWallData = function (_wallpoints) {
     var _this = this;
     //墙体模板
@@ -539,7 +543,6 @@ z3D.prototype.CreateWallData = function (_wallpoints) {
         }
     }
     _this.InitAddBaseObject(wallbasedata);
-
 };
 /**
  * 创建墙体
@@ -871,7 +874,114 @@ z3D.prototype.createPlaneGeometry = function (_this, _obj) {
     plane.rotation.y = options.rotation.y;
     plane.rotation.z = options.rotation.z;
     return plane;
-}
+};
+/**
+ * 创建机柜数据
+ * @param {*} _wallpoints 
+ */
+z3D.prototype.createEmptyCabinetData = function (_CabinetObj) {
+    var _this = this;
+    //机柜数据
+    var EmptyCabinetData = [];
+    if (_CabinetObj.length > 0) {
+        //创建墙体基本数据
+        for (var i = 0; i < _CabinetObj.length; i++) {
+            var cabinetName='cabinet' + _this.commonFunc.guid();
+            //每一面墙的数据
+            var cabinet = {
+                show: _CabinetObj[i].show || true,
+                name: _CabinetObj[i].name || cabinetName,
+                shellname: _CabinetObj[i].shellname || cabinetName + '_shell',
+                uuid: _CabinetObj[i].uuid || _this.commonFunc.guid(),
+                rotation: _CabinetObj[i].rotation || [{
+                    state: "local", //旋转坐标系（自身local，世界word）
+                    direction: 'y', //旋转坐标轴
+                    degree: 0.5 * Math.PI //Math.PI 等于180度,沿坐标轴逆时针旋转
+                }], //基于坐标轴旋转,
+                objType: 'emptyCabinet',
+                transparent: _CabinetObj[i].transparent || true,
+                size: {
+                    length: 66,
+                    width: 70,
+                    height: 200,
+                    thick: 2
+                },
+                position: {
+                    x: _CabinetObj[i].position.x || 0,
+                    y: _CabinetObj[i].position.y || 0,
+                    z: _CabinetObj[i].position.z || 0
+                },
+                doors: {
+                    doorType: 'lr', // ud上下门 lr左右门 单门可以缺省
+                    doorSize: [1],
+                    doorname: [cabinetName + '_door_01'],
+                    skins: [{
+                        skinColor: 0x333333,
+                        skin_fore: {
+                            imgurl: "images/rack_door_back.jpg",
+                        },
+                        skin_behind: {
+                            imgurl: "images/rack_front_door.jpg",
+                        }
+                    }]
+                },
+                skin: {
+                    skinColor: 0xff0000,
+                    skin_up: {
+                        skin: {
+                            skinColor: 0xff0000,
+                            skin_up: {
+                                imgurl: "images/rack_door_back.jpg"
+                            },
+                            skin_down: {
+                                imgurl: "images/rack_door_back.jpg"
+                            },
+                            skin_fore: {
+                                skinColor: 0xff0000,
+                                imgurl: "images/rack_door_back.jpg"
+                            },
+                            skin_behind: {
+                                skinColor: 0xff0000,
+                                imgurl: "images/rack_door_back.jpg"
+                            },
+                            skin_left: {
+                                imgurl: "images/rack_door_back.jpg"
+                            },
+                            skin_right: {
+                                imgurl: "images/rack_door_back.jpg"
+                            },
+                        }
+                    },
+                    skin_down: {
+                        skin: {
+                            skinColor: 0x333333,
+                        }
+                    },
+                    skin_left: {
+                        skin: {
+                            skinColor: 0x333333,
+                        }
+                    },
+                    skin_right: {
+                        skin: {
+                            skinColor: 0x333333,
+                        }
+                    },
+                    skin_behind: {
+                        skin: {
+                            skinColor: 0x333333,
+                        }
+                    }
+                }
+            };
+            EmptyCabinetData.push(cabinet);
+        }
+    }
+    //添加3D机柜
+    $.each(EmptyCabinetData, function (index, _eCobj) {
+        _this.InitAddBaseObject(_eCobj);
+    });
+};
 /**
  * 创建空柜子
  * @param {*} _this 
@@ -1218,24 +1328,11 @@ z3D.prototype.addBtns = function (_btnobjs) {
 
 /**
  * 视角俯视
- * @param {*} _plan 所控制得平面
  */
-z3D.prototype.viewRecover = function (_plan) {
+z3D.prototype.viewRecover = function () {
     var _this = z3DObj;
     var mainCamera = _this.commonFunc.findObject("mainCamera"); //主摄像机
     var controls = _this.controls; //主控制器
-    _this.editState = _this.editState == 0 ? 1 : 0; //更改可编辑状态
-    if (_this.editState == 0) {
-        _this.transformControl.dispose(); //取消拖拽
-        _this.transformControl.detach();
-        _this.dragcontrols.enabled = false; //取消控制
-        _this.CreateWallData(_this.positions); //创建墙体信息
-        _this.commonFunc.cancelEdit();
-    } else {
-        _this.initTransformControl();
-        _this.transformControl.axisoption = _plan;
-        _this.dragcontrols.enabled = true; //取消控制
-    }
     controls.enableRotate = true; //允许旋转
     //角度初始化
     var conTarget = new createjs.Tween(controls.target)
@@ -1258,6 +1355,24 @@ z3D.prototype.viewRecover = function (_plan) {
         z: 0
     });
     controls.enableRotate = _this.editState == 1 ? false : true; //不允许旋转
+};
+/**
+ * 改变编辑状态
+ * @param {*} _plan 所控制得平面
+ */
+z3D.prototype.changeEditState = function (_plan) {
+    _this.editState = _this.editState == 0 ? 1 : 0; //更改可编辑状态
+    if (_this.editState == 0) {
+        _this.transformControl.dispose(); //取消拖拽
+        _this.transformControl.detach();
+        _this.dragcontrols.enabled = false; //取消控制
+        _this.CreateWallData(_this.positions); //创建墙体信息
+        _this.commonFunc.cancelEdit();
+    } else {
+        _this.initTransformControl();
+        _this.transformControl.axisoption = _plan;
+        _this.dragcontrols.enabled = true; //取消控制
+    }
 };
 /**
  * 要素位置还原

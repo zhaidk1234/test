@@ -627,95 +627,32 @@ var baseObjects = [
         },
         blending: false,
     },
+];
+
+var eCData= [ 
     //机柜1-1 --原型
     {
-        show: true,
         name: 'cabinet1_1',
         shellname: 'cabinet1_1_shell',
         uuid: '',
-        rotation: [{
-            state:"local", //旋转坐标系（自身local，世界word）
-            direction: 'y', //旋转坐标轴
-            degree: 0.9* Math.PI //Math.PI 等于180度,沿坐标轴逆时针旋转
-        }], //基于坐标轴旋转,
-        objType: 'emptyCabinet',
-        transparent: true,
-        size: {
-            length: 66,
-            width: 70,
-            height: 200,
-            thick: 2
-        },
         position: {
             x: 300,
             y: 105,
             z: -180
         },
-        doors: {
-            doorType: 'lr', // ud上下门 lr左右门 单门可以缺省
-            doorSize: [1],
-            doorname: ['cabinet1_1_door_01'],
-            skins: [{
-                skinColor: 0x333333,
-                skin_fore: {
-                    imgurl: "images/rack_door_back.jpg",
-                },
-                skin_behind: {
-                    imgurl: "images/rack_front_door.jpg",
-                }
-            }]
+    },
+    //机柜1-2 --原型
+    {
+        name: 'cabinet1_2',
+        shellname: 'cabinet1_2_shell',
+        uuid: '',
+        position: {
+            x: -300,
+            y: 105,
+            z: -180
         },
-        skin: {
-            skinColor: 0xff0000,
-            skin_up: {
-                skin: {
-                    skinColor: 0xff0000,
-                    skin_up: {
-                        imgurl: "images/rack_door_back.jpg"
-                    },
-                    skin_down: {
-                        imgurl: "images/rack_door_back.jpg"
-                    },
-                    skin_fore: {
-                        skinColor: 0xff0000,
-                        imgurl: "images/rack_door_back.jpg"
-                    },
-                    skin_behind: {
-                        skinColor: 0xff0000,
-                        imgurl: "images/rack_door_back.jpg"
-                    },
-                    skin_left: {
-                        imgurl: "images/rack_door_back.jpg"
-                    },
-                    skin_right: {
-                        imgurl: "images/rack_door_back.jpg"
-                    },
-                }
-            },
-            skin_down: {
-                skin: {
-                    skinColor: 0x333333,
-                }
-            },
-            skin_left: {
-                skin: {
-                    skinColor: 0x333333,
-                }
-            },
-            skin_right: {
-                skin: {
-                    skinColor: 0x333333,
-                }
-            },
-            skin_behind: {
-                skin: {
-                    skinColor: 0x333333,
-                }
-            }
-        }
     },
 ];
-
 
 //基础事件内容
 var baseEvents = {
@@ -751,8 +688,10 @@ var baseBtns = [{
         btnimg: "images/icons/connection.png",
         event: function () {
             //视角俯视事件
-            z3DObj.viewRecover("XZ"); //控制哪个页面
-            z3DObj.createLinkLine(); //创建连接线
+            z3DObj.viewRecover(); //控制哪个页面
+            z3DObj.createEmptyCabinetData(eCData);
+            //z3DObj.changeEditState("XZ"); //控制哪个页面
+            //z3DObj.createLinkLine(); //创建连接线
         }
     },
     {
