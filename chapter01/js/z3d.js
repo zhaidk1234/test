@@ -283,10 +283,8 @@ z3D.prototype.initTransformControl = function () {
     //隐藏变换相关动作
     _this.transformControl.addEventListener('change', function (e) {
         //_this.editState = _this.editState ? 0 : 1; //切换可编辑状态
-        _this.commonFunc.cancelHideTransorm();
-    });
-    _this.transformControl.addEventListener('hoveroff', function (e) {
-        _this.commonFunc.cancelHideTransorm();
+        _this.initCoordinates(_this.transformControl.object.position); //显示坐标
+        _this.commonFunc.delayHideTransform();
     });
     _this.transformControl.addEventListener('mouseDown', function (e) {
         _this.commonFunc.cancelHideTransorm();
@@ -300,6 +298,47 @@ z3D.prototype.initTransformControl = function () {
     });
 };
 /**
+ * 初始化坐标监视器
+ */
+z3D.prototype.initCoordinates = function (_position) {
+    var _this = this;
+    //坐标显示拼接
+    var html = '';
+    html += '<table style="color:#000000;">';
+    html += '<tr>';
+    html += '<td>X:</td>';
+    html += '<td>' + _position.x + '</td>';
+    html += '</tr>';
+    html += '<tr>';
+    html += '<td>Y:</td>';
+    html += '<td>' + _position.y + '</td>';
+    html += '</tr>';
+    html += '<tr>';
+    html += '<td>Z:</td>';
+    html += '<td>' + _position.z + '</td>';
+    html += '</tr>';
+    html += '</table>';
+    var cDiv = document.getElementById("Coordinates");
+    var p = _this.commonFunc.convertToSceenCoordinate(_position);
+    if (cDiv != null) {
+        cDiv.style.top = p.y + 10 + 'px';
+        cDiv.style.left = p.x + 10 + 'px';
+        cDiv.style.display = 'block';
+        cDiv.innerHTML = html;
+    } else {
+        var cooDiv = document.createElement("div");
+        cooDiv.id = "Coordinates";
+        cooDiv.style.position = 'absolute';
+        cooDiv.style.padding = '5px';
+        cooDiv.style.backgroundColor = '#f9f21f3d';
+        cooDiv.style.display = 'block';
+        cooDiv.style.top = p.y + 10 + 'px';
+        cooDiv.style.left = p.x + 10 + 'px';
+        cooDiv.innerHTML = html;
+        $("#" + _this.fId).append(cooDiv);
+    }
+};
+/**
  * 拖动控制器
  */
 z3D.prototype.initDragControl = function (_objs) {
@@ -308,7 +347,6 @@ z3D.prototype.initDragControl = function (_objs) {
     _this.dragcontrols = new THREE.DragControls(objs, _this.camera, _this.renderer.domElement); //
     _this.dragcontrols.enabled = false;
     _this.dragcontrols.addEventListener('hoveron', function (event) {
-        console.log(event.object);
         //if (_this.editState != 0) {
         _this.transformControl.attach(event.object.parent);
         //}
@@ -1659,6 +1697,21 @@ z3D.prototype.commonFunc = {
         return new THREE.Vector2(mv.x, mv.y);
     },
     /**
+     * Threejs三维坐标转化成一个屏幕坐标
+     */
+    convertToSceenCoordinate: function (_position) {
+        var _this = z3DObj;
+        var world_vector = new THREE.Vector3(_position.x, _position.y, _position.z);
+        var vector = world_vector.project(_this.camera);
+        var halfWidth = window.innerWidth / 2;
+        var halfHeight = window.innerHeight / 2;
+        var result = {
+            x: Math.round(vector.x * halfWidth + halfWidth),
+            y: Math.round(-vector.y * halfHeight + halfHeight)
+        };
+        return result;
+    },
+    /**
      * 延迟隐藏变换
      */
     delayHideTransform: function () {
@@ -1672,6 +1725,10 @@ z3D.prototype.commonFunc = {
     hideTransform: function () {
         var _this = z3DObj;
         _this.hiding = setTimeout(function () {
+            var cDiv = document.getElementById("Coordinates");
+            if (cDiv != null) {
+                cDiv.style.display = 'none';
+            }
             _this.transformControl.detach(_this.transformControl.object);
         }, 2500);
     },
