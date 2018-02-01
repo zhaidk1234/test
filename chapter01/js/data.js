@@ -657,141 +657,30 @@ var eCData = [
 //服务器
 var serverData = [ //主机1
     {
-        show: true,
         uuid: "",
         name: 'equipment_card_1',
-        objType: 'cube',
-        length: 60,
-        width: 65,
-        height: 10,
-        x: -100,
+        serverType:"Type1",
+        x: -200,
         y: 105,
-        z: -180,
-        rotation: [{
-            direction: 'y',
-            degree: 0.5 * Math.PI
-        }], //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
-        style: {
-            skinColor: 0xff0000,
-            skin: {
-                skin_up: {
-                    skinColor: 0xff0000,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_down: {
-                    skinColor: 0xff0000,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_fore: {
-                    skinColor: 0xff0000,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_behind: {
-                    skinColor: 0xff0000,
-                    imgurl: "images/server2.jpg",
-                },
-                skin_left: {
-                    skinColor: 0xff0000,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_right: {
-                    skinColor: 0xff0000,
-                    imgurl: "images/rack_inside.jpg",
-                }
-            }
-        }
+        z: -180
     },
     //主机2
     {
-        show: true,
         uuid: "",
         name: 'equipment_card_2',
-        objType: 'cube',
-        length: 60,
-        width: 65,
-        height: 20,
+        serverType:"Type2",
         x: -100,
         y: 120,
-        z: -180,
-        rotation: [{
-            direction: 'y',
-            degree: 0.5 * Math.PI
-        }], //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
-        style: {
-            skinColor: 0x92630b,
-            skin: {
-                skin_up: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_down: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_fore: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_behind: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/server2.jpg",
-                },
-                skin_left: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_right: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/rack_inside.jpg",
-                }
-            }
-        }
+        z: -180
     },
     //主机3
     {
-        show: true,
         uuid: "",
         name: 'equipment_card_3',
-        objType: 'cube',
-        length: 60,
-        width: 65,
-        height: 30,
+        serverType:"Type3",
         x: -100,
         y: 145,
-        z: -180,
-        rotation: [{
-            direction: 'y',
-            degree: 0.5 * Math.PI
-        }], //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
-        style: {
-            skinColor: 0x92630b,
-            skin: {
-                skin_up: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_down: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_fore: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_behind: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/server3.jpg",
-                },
-                skin_left: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/rack_inside.jpg",
-                },
-                skin_right: {
-                    skinColor: 0x92630b,
-                    imgurl: "images/rack_inside.jpg",
-                }
-            }
-        }
+        z: -180
     },
 ];
 
@@ -828,7 +717,7 @@ var baseEvents = {
             },
             obj_uuid: "",
             obj_event: function (_obj) {
-                z3DObj.opcabinetdoor(_obj);
+                z3DObj.opcabinetdoor(_obj, serverData);
             }
         },
         {

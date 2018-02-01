@@ -471,6 +471,9 @@ z3D.prototype.InitAddBaseObject = function (_obj) {
                 _tempObj = _this.createEmptyCabinet(_this, _obj);
                 _this.addObject(_tempObj);
                 break;
+            case 'serverCube':
+                _this.createServerCube(_this, _obj);
+                break;
             case 'cloneObj':
                 _tempObj = _this.commonFunc.cloneObj(_obj.copyfrom, _obj);
                 _this.addObject(_tempObj);
@@ -660,7 +663,7 @@ z3D.prototype.CreateWall = function (_this, _obj) {
                 skinColor: _commonSkin,
                 skin: wallobj.skin
             }
-        }
+        };
         var _cube = _this.createCube(_this, cubeobj);
         if (_this.commonFunc.hasObj(wallobj.childrens) && wallobj.childrens.length > 0) {
             $.each(wallobj.childrens, function (index, walchildobj) {
@@ -713,7 +716,7 @@ z3D.prototype.CreateHole = function (_this, _obj) {
             skinColor: _commonSkin,
             skin: _obj.skin
         }
-    }
+    };
     var _cube = _this.createCube(_this, cubeobj);
     return _cube;
 };
@@ -837,7 +840,7 @@ z3D.prototype.createCube = function (_this, _obj) {
     //六面纹理
     var skin_up_obj = {
         vertexColors: THREE.FaceColors
-    }
+    };
     var skin_down_obj = skin_up_obj,
         skin_fore_obj = skin_up_obj,
         skin_behind_obj = skin_up_obj,
@@ -917,12 +920,13 @@ z3D.prototype.createCube = function (_this, _obj) {
 z3D.prototype.createPlaneGeometry = function (_this, _obj) {
 
     var options = _obj;
+    var texture;
     if (typeof options.pic == "string") { //传入的材质是图片路径，使用 textureloader加载图片作为材质
         var loader = new THREE.TextureLoader();
         loader.setCrossOrigin(this.crossOrigin);
-        var texture = loader.load(options.pic, function () {}, undefined, function () {});
+        texture = loader.load(options.pic, function () {}, undefined, function () {});
     } else {
-        var texture = new THREE.CanvasTexture(options.pic)
+        texture = new THREE.CanvasTexture(options.pic);
     }
     var MaterParam = { //材质的参数
         map: texture,
@@ -935,7 +939,7 @@ z3D.prototype.createPlaneGeometry = function (_this, _obj) {
         opacity: options.opacity
     }
     if (options.blending) {
-        MaterParam.blending = THREE.AdditiveBlending //使用饱和度叠加渲染
+        MaterParam.blending = THREE.AdditiveBlending; //使用饱和度叠加渲染
     }
     var plane = new THREE.Mesh(
         new THREE.PlaneGeometry(options.width, options.height, 1, 1),
@@ -1122,7 +1126,9 @@ z3D.prototype.createEmptyCabinetData = function (_CabinetObj) {
  *    };
  */
 z3D.prototype.createEmptyCabinet = function (_this, _obj) {
-    var _this = z3DObj;
+    if (_this == null) {
+        _this = z3DObj;
+    }
     //创建五个面
     //上
     var upobj = {
@@ -1177,7 +1183,7 @@ z3D.prototype.createEmptyCabinet = function (_this, _obj) {
             skinColor: _obj.skin.skinColor,
             skin: _obj.skin.skin_right.skin
         }
-    }
+    };
     var Rightcube = _this.createCube(_this, Rightobj);
     Cabinet = _this.mergeModel(_this, '+', Cabinet, Rightcube);
     //后
@@ -1303,14 +1309,153 @@ z3D.prototype.createEmptyCabinet = function (_this, _obj) {
         });
     }
     return tempobj;
-}
+};
+/**
+ * 创建服务器数据
+ * @param {*} _Pobj 父节点
+ * @param {*} _ServerObj 
+ */
+z3D.prototype.createServerData = function (_Pobj, _ServerObj) {
+    var _this = z3DObj;
+    //主机所在坐标，针对y坐标
+    var parentObj = _Pobj;
+    //主机数数据
+    var ServerData = [];
+    //主机模板
+    var serverType = "Type1";
+    var serverName = "equipment_card_" + _this.commonFunc.guid();
+    var serverHeight = 10;
+    var serverRotation = [{
+        direction: 'y',
+        degree: 0.5 * Math.PI
+    }];
+    var serverSkinBehindUrl = "images/server1.jpg";
+    var serverSkinOtherUrl = "images/rack_inside.jpg";
+    var serverSkinColor = 0xff0000;
+
+    var serverStyle = {
+        skinColor: serverSkinColor,
+        skin: {
+            skin_up: {
+                skinColor: serverSkinColor,
+                imgurl: serverSkinOtherUrl,
+            },
+            skin_down: {
+                skinColor: serverSkinColor,
+                imgurl: serverSkinOtherUrl,
+            },
+            skin_fore: {
+                skinColor: serverSkinColor,
+                imgurl: serverSkinOtherUrl,
+            },
+            skin_behind: {
+                skinColor: serverSkinColor,
+                imgurl: serverSkinBehindUrl,
+            },
+            skin_left: {
+                skinColor: serverSkinColor,
+                imgurl: serverSkinOtherUrl,
+            },
+            skin_right: {
+                skinColor: serverSkinColor,
+                imgurl: serverSkinOtherUrl,
+            }
+        }
+    };
+    $.each(_ServerObj, function (index, _sobj) {
+        if (_sobj.serverType != null && typeof (_sobj.serverType) != 'undefined') {
+            serverType = _sobj.serverType;
+        }
+        switch (serverType) {
+            case 'Type1':
+                serverHeight = 10;
+                serverStyle.skin.skin_behind.imgurl = "images/server1.jpg";
+                break;
+            case 'Type2':
+                serverHeight = 20;
+                serverStyle.skin.skin_behind.imgurl = "images/server2.jpg";
+                break;
+            case 'Type3':
+                serverHeight = 30;
+                serverStyle.skin.skin_behind.imgurl = "images/server3.jpg";
+                break;
+        }
+        var serverObj = {
+            show: true,
+            uuid: _sobj.uuid || _this.commonFunc.guid(),
+            name: _sobj.name || serverName,
+            objType: 'serverCube',
+            CabinetId: parentObj.uuid,
+            length: 60,
+            width: 65,
+            height: serverHeight,
+            x: 0, //parentObj.position.x
+            y: _sobj.y || 0,
+            z: 0, //parentObj.position.z
+            rotation: _sobj.rotation || serverRotation, //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
+            style: _sobj.style || serverStyle
+        };
+        ServerData.push(serverObj);
+    });
+
+    if (ServerData.length > 0) {
+        //添加服务器
+        $.each(ServerData, function (index, _sobj) {
+            _this.InitAddBaseObject(_sobj);
+        });
+    }
+};
+/**
+ * 创建服务器
+ * @param {*} _this 
+ * @param {*} _obj 
+ */
+z3D.prototype.createServerCube = function (_this, _obj) {
+    if (_this == null) {
+        _this = z3DObj;
+    }
+    var _sCube = _this.createCube(_this, _obj);
+    _this.objects.push(_sCube);
+    var cabinet = _this.commonFunc.findObject3DByUUID(_obj.CabinetId);
+    cabinet.add(_sCube);
+    console.log(cabinet);
+    //清除原有对象
+    _this.commonFunc.removeInObject('uuid', _obj.CabinetId);
+    _this.scene.remove(cabinet);
+
+    //重新添加对象
+    _this.addObject(cabinet);
+};
+/**
+ * 清楚服务器
+ * @param {*} _this 
+ * @param {*} _obj 
+ */
+z3D.prototype.clearServerCube = function (_this, _obj) {
+    if (_this == null) {
+        _this = z3DObj;
+    }
+    var _sCube = _this.createCube(_this, _obj);
+    _this.objects.push(_sCube);
+    var cabinet = _this.commonFunc.findObject3DByUUID(_obj.CabinetId);
+    cabinet.add(_sCube);
+    console.log(cabinet);
+    //清除原有对象
+    _this.commonFunc.removeInObject('uuid', _obj.CabinetId);
+    _this.scene.remove(cabinet);
+
+    //重新添加对象
+    _this.addObject(cabinet);
+};
 /**
  * 创建玻璃
  * @param {*} _this 
  * @param {*} _obj 
  */
 z3D.prototype.createGlasses = function (_this, _obj) {
-    var _this = z3DObj;
+    if (_this == null) {
+        _this = z3DObj;
+    }
     var tmpobj = _this.createPlaneGeometry(_this, _obj);
     _this.addObject(tmpobj);
     _obj.rotation.y = Math.PI + _obj.rotation.y;
@@ -1526,6 +1671,25 @@ z3D.prototype.commonFunc = {
         return findedobj;
     },
     /**
+     * 查找对象
+     */
+    findObject3DByUUID: function (_uuid) {
+        var _this = z3DObj;
+        //console.log('findObject');
+        var findedobj = null;
+        $.each(_this.objects, function (index, _obj) {
+            if (_obj.type == "Object3D") {
+                if (_obj.uuid != null && _obj.uuid != '') {
+                    if (_obj.uuid == _uuid) {
+                        findedobj = _obj;
+                        return true;
+                    }
+                }
+            }
+        });
+        return findedobj;
+    },
+    /**
      * 在动态数据中查找对象
      */
     findObjectInData: function (_objuuid, _objs) {
@@ -1540,6 +1704,28 @@ z3D.prototype.commonFunc = {
             }
         });
         return findedobj;
+    },
+    /**
+     * 找到全局变量中objects得某个特定元素
+     */
+    findIndexOfObject: function (_id, _val) {
+        var _this = z3DObj;
+        for (var i = 0; i < _this.objects.length; i++) {
+            if (_this.objects[i].type == "Object3D") {
+                if (_this.objects[i][_id] == _val) return i;
+            }
+        }
+        return -1;
+    },
+    /**
+     * 移除全局变量中objects得某个特定元素
+     */
+    removeInObject: function (_id, _val) {
+        var _this = z3DObj;
+        var index = _this.commonFunc.findIndexOfObject(_id, _val);
+        if (index > -1) {
+            _this.objects.splice(index, 1);
+        }
     },
     /**
      * 复制对象
@@ -1659,19 +1845,19 @@ z3D.prototype.commonFunc = {
         var _this = z3DObj;
         var _fobj = _this.commonFunc.findObject(_objname);
         if (parameters === undefined) parameters = {};
-        var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Arial";
-        var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
-        var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
-        var textColor = parameters.hasOwnProperty("textColor") ? parameters["textColor"] : {
+        var fontface = parameters.hasOwnProperty("fontface") ? parameters.fontface : "Arial";
+        var fontsize = parameters.hasOwnProperty("fontsize") ? parameters.fontsize : 18;
+        var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters.borderThickness : 4;
+        var textColor = parameters.hasOwnProperty("textColor") ? parameters.textColor : {
             r: 0,
             g: 0,
             b: 0,
             a: 1.0
         };
-        var message = parameters.hasOwnProperty("message") ? parameters["message"] : "helloz3D";
-        var x = parameters.hasOwnProperty("position") ? parameters["position"].x : 0;
-        var y = parameters.hasOwnProperty("position") ? parameters["position"].y : 0;
-        var z = parameters.hasOwnProperty("position") ? parameters["position"].z : 0;
+        var message = parameters.hasOwnProperty("message") ? parameters.message : "helloz3D";
+        var x = parameters.hasOwnProperty("position") ? parameters.position.x : 0;
+        var y = parameters.hasOwnProperty("position") ? parameters.position.y : 0;
+        var z = parameters.hasOwnProperty("position") ? parameters.position.z : 0;
         var canvas = document.createElement('canvas');
         var context = canvas.getContext('2d');
         context.font = "Bold " + fontsize + "px " + fontface;
@@ -1960,6 +2146,7 @@ var dbclick = 0;
 z3D.prototype.onDocumentMouseDown = function (event) {
     dbclick++;
     var _this = z3DObj;
+    var intersects;
     _this.mouseClick.x = (event.clientX / _this.width) * 2 - 1;
     _this.mouseClick.y = -(event.clientY / _this.height) * 2 + 1;
     setTimeout(function () {
@@ -1974,7 +2161,7 @@ z3D.prototype.onDocumentMouseDown = function (event) {
             vector.set(_this.mouseClick.x, _this.mouseClick.y, 0.5);
             vector.unproject(_this.camera);
             var raycaster = new THREE.Raycaster(_this.camera.position, vector.sub(_this.camera.position).normalize());
-            var intersects = raycaster.intersectObjects(_this.scene.children);
+            intersects = raycaster.intersectObjects(_this.scene.children);
             if (intersects.length > 0) {
                 var selected = intersects[0]; //取第一个物体
                 _this.commonFunc.addPoint(selected.point, false);
@@ -1988,7 +2175,7 @@ z3D.prototype.onDocumentMouseDown = function (event) {
     //双击时
     if (dbclick >= 2) {
         _this.raycaster.setFromCamera(_this.mouseClick, _this.camera);
-        var intersects = _this.raycaster.intersectObjects(_this.objects); //射线和模型求交，选中一系列直线
+        intersects = _this.raycaster.intersectObjects(_this.objects); //射线和模型求交，选中一系列直线
         if (intersects.length > 0) {
             _this.controls.enabled = false;
             _this.SELECTED = intersects[0].object;
@@ -2095,7 +2282,7 @@ z3D.prototype.openLeftDoor = function (_obj, func) {
         doorstate = _obj.doorState;
         tempobj = _obj.parent;
     } else {
-        console.log("add parent");
+        //console.log("add parent");
         var _objparent = _obj.parent;
         tempobj = new THREE.Object3D();
         tempobj.position.set(_obj.position.x + _obj.geometry.parameters.width / 2, _obj.position.y, _obj.position.z);
@@ -2113,7 +2300,8 @@ z3D.prototype.openLeftDoor = function (_obj, func) {
  * @param {*} _obj 
  * @param {*} func 
  */
-z3D.prototype.opcabinetdoor = function (_obj, func) {
+z3D.prototype.opcabinetdoor = function (_obj, _serverData, func) {
+    var _this = z3DObj;
     var doorstate = "close";
     var tempobj = null;
     if (_obj.doorState != null && typeof (_obj.doorState) != 'undefined') {
@@ -2123,6 +2311,8 @@ z3D.prototype.opcabinetdoor = function (_obj, func) {
         //console.log("add parent");
         var _objparent = _obj.parent;
         tempobj = new THREE.Object3D();
+        tempobj.pid = _obj.parent.uuid;
+        tempobj.pPosition = _obj.parent.position;
         var R = _obj.geometry.parameters.depth / 2;
         if (_obj.r != null && typeof (_obj.r) != 'undefined' && _obj.r.length > 0) {
             $.each(_obj.r, function (index, rotation_obj) {
@@ -2146,10 +2336,28 @@ z3D.prototype.opcabinetdoor = function (_obj, func) {
             _obj.position.set(0, 0, -_obj.geometry.parameters.depth / 2);
         }
         tempobj.add(_obj);
-        console.log(_obj.r);
         _objparent.add(tempobj);
     }
     _obj.doorState = (doorstate == "close" ? "open" : "close");
+    if (_obj.doorState == "open") {
+        if (serverData != null && serverData != 'undefined') {
+            var OP = {};
+            if (tempobj.pid != null && tempobj.pid != 'undefined') {
+                OP.uuid = tempobj.pid;
+                OP.position = tempobj.pPosition;
+                console.log(tempobj.pid);
+                console.log(tempobj.pPosition);
+            } else {
+                OP.uuid = _obj.parent.uuid;
+                OP.position = _obj.parent.position;
+                console.log(_obj.parent.uuid);
+                console.log(_obj.parent.position);
+            }
+            _this.createServerData(OP, _serverData);
+        }
+    } else {
+
+    }
     new createjs.Tween(tempobj.rotation).to({
         y: (doorstate == "close" ? 0.25 * 2 * Math.PI : 0 * 2 * Math.PI)
     }, 1000, createjs.Ease.linear);
