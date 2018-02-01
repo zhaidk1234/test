@@ -637,7 +637,6 @@ var eCData = [
         uuid: '',
         position: {
             x: 300,
-            y: 105,
             z: -180
         },
     },
@@ -648,7 +647,6 @@ var eCData = [
         uuid: '',
         position: {
             x: -300,
-            y: 105,
             z: -180
         },
     },
@@ -730,17 +728,7 @@ var baseEvents = {
             },
             obj_uuid: "",
             obj_event: function (_obj) {
-                var cardstate = "in";
-                if (_obj.cardstate != null && typeof (_obj.cardstate) != 'undefined') {
-                    cardstate = _obj.cardstate;
-                } else {
-                    _obj.cardstate = "out";
-                }
-                new createjs.Tween(_obj.position).to({
-                    x: (cardstate == "in" ? _obj.position.x - 50 : _obj.position.x + 50),
-                }, 1000, createjs.Ease.linear).call(function () {
-                    _obj.cardstate = cardstate == "in" ? "out" : "in";
-                });
+                z3DObj.openServer(_obj);
             }
         }
     ],

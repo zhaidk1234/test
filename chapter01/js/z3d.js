@@ -56,6 +56,7 @@ z3D.prototype.initz3D = function (_fId, _option, _basedata, _datajson) {
     this.splinePointsLength = 4; //曲线初始化节点数量
     this.positions = []; //
     this.wallpoints = []; //墙体点位数据
+    this.serverRotation = null; //服务器旋转角度
 
     this.mouseClick = new THREE.Vector2();
     this.raycaster = new THREE.Raycaster();
@@ -986,7 +987,7 @@ z3D.prototype.createEmptyCabinetData = function (_CabinetObj) {
                 },
                 position: {
                     x: _CabinetObj[i].position.x || 0,
-                    y: _CabinetObj[i].position.y || 0,
+                    y: 105,
                     z: _CabinetObj[i].position.z || 0
                 },
                 doors: {
@@ -1329,39 +1330,12 @@ z3D.prototype.createServerData = function (_Pobj, _ServerObj) {
         direction: 'y',
         degree: 0.5 * Math.PI
     }];
+    _this.serverRotation = serverRotation;
     var serverSkinBehindUrl = "images/server1.jpg";
     var serverSkinOtherUrl = "images/rack_inside.jpg";
     var serverSkinColor = 0xff0000;
 
-    var serverStyle = {
-        skinColor: serverSkinColor,
-        skin: {
-            skin_up: {
-                skinColor: serverSkinColor,
-                imgurl: serverSkinOtherUrl,
-            },
-            skin_down: {
-                skinColor: serverSkinColor,
-                imgurl: serverSkinOtherUrl,
-            },
-            skin_fore: {
-                skinColor: serverSkinColor,
-                imgurl: serverSkinOtherUrl,
-            },
-            skin_behind: {
-                skinColor: serverSkinColor,
-                imgurl: serverSkinBehindUrl,
-            },
-            skin_left: {
-                skinColor: serverSkinColor,
-                imgurl: serverSkinOtherUrl,
-            },
-            skin_right: {
-                skinColor: serverSkinColor,
-                imgurl: serverSkinOtherUrl,
-            }
-        }
-    };
+    var serverStyle = {};
     $.each(_ServerObj, function (index, _sobj) {
         if (_sobj.serverType != null && typeof (_sobj.serverType) != 'undefined') {
             serverType = _sobj.serverType;
@@ -1369,15 +1343,102 @@ z3D.prototype.createServerData = function (_Pobj, _ServerObj) {
         switch (serverType) {
             case 'Type1':
                 serverHeight = 10;
-                serverStyle.skin.skin_behind.imgurl = "images/server1.jpg";
+                serverSkinBehindUrl = "images/server1.jpg";
+                serverStyle = {
+                    skinColor: serverSkinColor,
+                    skin: {
+                        skin_up: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_down: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_fore: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_behind: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinBehindUrl,
+                        },
+                        skin_left: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_right: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        }
+                    }
+                };
                 break;
             case 'Type2':
                 serverHeight = 20;
-                serverStyle.skin.skin_behind.imgurl = "images/server2.jpg";
+                serverSkinBehindUrl = "images/server2.jpg";
+                serverStyle = {
+                    skinColor: serverSkinColor,
+                    skin: {
+                        skin_up: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_down: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_fore: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_behind: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinBehindUrl,
+                        },
+                        skin_left: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_right: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        }
+                    }
+                };
                 break;
             case 'Type3':
                 serverHeight = 30;
-                serverStyle.skin.skin_behind.imgurl = "images/server3.jpg";
+                serverSkinBehindUrl = "images/server3.jpg";
+                serverStyle = {
+                    skinColor: serverSkinColor,
+                    skin: {
+                        skin_up: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_down: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_fore: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_behind: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinBehindUrl,
+                        },
+                        skin_left: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_right: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        }
+                    }
+                };
                 break;
         }
         var serverObj = {
@@ -2369,13 +2430,9 @@ z3D.prototype.opcabinetdoor = function (_obj, _serverData, func) {
     if (tempobj.pid != null && tempobj.pid != 'undefined') {
         OP.uuid = tempobj.pid;
         OP.position = tempobj.pPosition;
-        console.log(tempobj.pid);
-        console.log(tempobj.pPosition);
     } else {
         OP.uuid = _obj.parent.uuid;
         OP.position = _obj.parent.position;
-        console.log(_obj.parent.uuid);
-        console.log(_obj.parent.position);
     }
     if (_obj.doorState == "open") {
         if (serverData != null && serverData != 'undefined') {
@@ -2387,4 +2444,44 @@ z3D.prototype.opcabinetdoor = function (_obj, _serverData, func) {
     new createjs.Tween(tempobj.rotation).to({
         y: (doorstate == "close" ? 0.25 * 2 * Math.PI : 0 * 2 * Math.PI)
     }, 1000, createjs.Ease.linear);
+};
+/**
+ * 抽出主机
+ * @param {*} _obj 
+ * @param {*} func 
+ */
+z3D.prototype.openServer = function (_obj, func) {
+    var _this = z3DObj;
+    var cardstate = "in";
+    if (_obj.cardstate != null && typeof (_obj.cardstate) != 'undefined') {
+        cardstate = _obj.cardstate;
+    } else {
+        _obj.cardstate = "out";
+    }
+    var R = 50;
+    var x = 0;
+    var z = 0;
+    if (_this.serverRotation != null && typeof (_this.serverRotation) != 'undefined' && _this.serverRotation.length > 0) {
+        $.each(_this.serverRotation, function (index, rotation_obj) {
+            switch (rotation_obj.direction) {
+                case 'x':
+                    break;
+                case 'y':
+                    x = R * Math.cos(rotation_obj.degree);
+                    z = -R * Math.sin(rotation_obj.degree);
+                    break;
+                case 'z':
+                    break;
+                case 'arb':
+                    break;
+            }
+        });
+    }
+
+    new createjs.Tween(_obj.position).to({
+        x: (cardstate == "in" ? _obj.position.x - x : _obj.position.x + x),
+        z: (cardstate == "in" ? _obj.position.z - z : _obj.position.z + z),
+    }, 1000, createjs.Ease.linear).call(function () {
+        _obj.cardstate = cardstate == "in" ? "out" : "in";
+    });
 };
