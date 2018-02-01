@@ -1248,6 +1248,9 @@ z3D.prototype.createEmptyCabinet = function (_this, _obj) {
                 }
             };
             var singledoorcube = _this.createCube(_this, singledoorobj);
+            if (_obj.rotation != null && typeof (_obj.rotation) != 'undefined' && _obj.rotation.length > 0) {
+                singledoorcube.r = _obj.rotation;
+            }
             _this.objects.push(singledoorcube);
             tempobj.add(singledoorcube);
         } else if (doors.skins.length > 1) { //多门
@@ -2077,7 +2080,7 @@ z3D.prototype.openRightDoor = function (_obj, func) {
     }
     _obj.doorState = (doorstate == "close" ? "open" : "close");
     new createjs.Tween(tempobj.rotation).to({
-        y: (doorstate == "close" ? 0.25 * 2 * Math.PI : 0 * 2 * Math.PI)
+        y: (doorstate == "close" ? -0.25 * 2 * Math.PI : -0 * 2 * Math.PI)
     }, 10000, createjs.Ease.elasticOut);
 };
 /**
@@ -2102,7 +2105,7 @@ z3D.prototype.openLeftDoor = function (_obj, func) {
     }
     _obj.doorState = (doorstate == "close" ? "open" : "close");
     new createjs.Tween(tempobj.rotation).to({
-        y: (doorstate == "close" ? -0.25 * 2 * Math.PI : 0 * 2 * Math.PI)
+        y: (doorstate == "close" ? 0.25 * 2 * Math.PI : -0 * 2 * Math.PI)
     }, 10000, createjs.Ease.elasticOut);
 };
 /**
@@ -2117,16 +2120,37 @@ z3D.prototype.opcabinetdoor = function (_obj, func) {
         doorstate = _obj.doorState;
         tempobj = _obj.parent;
     } else {
-        console.log("add parent");
+        //console.log("add parent");
         var _objparent = _obj.parent;
         tempobj = new THREE.Object3D();
-        tempobj.position.set(_obj.position.x, _obj.position.y, _obj.position.z + _obj.geometry.parameters.depth / 2);
-        _obj.position.set(0, 0, -_obj.geometry.parameters.depth / 2);
+        var R = _obj.geometry.parameters.depth / 2;
+        if (_obj.r != null && typeof (_obj.r) != 'undefined' && _obj.r.length > 0) {
+            $.each(_obj.r, function (index, rotation_obj) {
+                switch (rotation_obj.direction) {
+                    case 'x':
+                        break;
+                    case 'y':
+                        var x = R * Math.sin(rotation_obj.degree);
+                        var z = R * Math.cos(rotation_obj.degree);
+                        tempobj.position.set(_obj.position.x + x, _obj.position.y, _obj.position.z + z);
+                        _obj.position.set(-x, 0, -z);
+                        break;
+                    case 'z':
+                        break;
+                    case 'arb':
+                        break;
+                }
+            });
+        } else {
+            tempobj.position.set(_obj.position.x, _obj.position.y, _obj.position.z + _obj.geometry.parameters.depth / 2);
+            _obj.position.set(0, 0, -_obj.geometry.parameters.depth / 2);
+        }
         tempobj.add(_obj);
+        console.log(_obj.r);
         _objparent.add(tempobj);
     }
     _obj.doorState = (doorstate == "close" ? "open" : "close");
     new createjs.Tween(tempobj.rotation).to({
         y: (doorstate == "close" ? 0.25 * 2 * Math.PI : 0 * 2 * Math.PI)
     }, 1000, createjs.Ease.linear);
-}
+};
