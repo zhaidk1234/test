@@ -1418,9 +1418,8 @@ z3D.prototype.createServerCube = function (_this, _obj) {
     _this.objects.push(_sCube);
     var cabinet = _this.commonFunc.findObject3DByUUID(_obj.CabinetId);
     cabinet.add(_sCube);
-    console.log(cabinet);
     //清除原有对象
-    _this.commonFunc.removeInObject('uuid', _obj.CabinetId);
+    _this.commonFunc.removeInObject3D('uuid', _obj.CabinetId);
     _this.scene.remove(cabinet);
 
     //重新添加对象
@@ -1431,19 +1430,23 @@ z3D.prototype.createServerCube = function (_this, _obj) {
  * @param {*} _this 
  * @param {*} _obj 
  */
-z3D.prototype.clearServerCube = function (_this, _obj) {
-    if (_this == null) {
-        _this = z3DObj;
-    }
-    var _sCube = _this.createCube(_this, _obj);
-    _this.objects.push(_sCube);
-    var cabinet = _this.commonFunc.findObject3DByUUID(_obj.CabinetId);
-    cabinet.add(_sCube);
-    console.log(cabinet);
-    //清除原有对象
-    _this.commonFunc.removeInObject('uuid', _obj.CabinetId);
+z3D.prototype.clearServerCube = function (_obj) {
+    var _this = z3DObj;
+    var cabinet = _this.commonFunc.findObject3DByUUID(_obj.uuid);
+    //清除原有对象    
     _this.scene.remove(cabinet);
-
+    if (cabinet != null) {
+        if (_this.commonFunc.hasObj(cabinet.children) && cabinet.children.length > 2) {
+            var count = cabinet.children.length;
+            //遍历并清楚所有主机
+            for (var i = 0; i < count - 2; i++) {
+                var sCube = cabinet.children[2];
+                cabinet.remove(sCube);
+                _this.commonFunc.removeInObject('uuid', sCube.uuid);
+            }
+        }
+    }
+    console.log(cabinet);
     //重新添加对象
     _this.addObject(cabinet);
 };
@@ -1708,10 +1711,32 @@ z3D.prototype.commonFunc = {
     /**
      * 找到全局变量中objects得某个特定元素
      */
-    findIndexOfObject: function (_id, _val) {
+    findIndexOfObject3D: function (_id, _val) {
         var _this = z3DObj;
         for (var i = 0; i < _this.objects.length; i++) {
             if (_this.objects[i].type == "Object3D") {
+                if (_this.objects[i][_id] == _val) return i;
+            }
+        }
+        return -1;
+    },
+    /**
+     * 移除全局变量中objects得某个特定元素
+     */
+    removeInObject3D: function (_id, _val) {
+        var _this = z3DObj;
+        var index = _this.commonFunc.findIndexOfObject3D(_id, _val);
+        if (index > -1) {
+            _this.objects.splice(index, 1);
+        }
+    },
+    /**
+     * 找到全局变量中objects得某个特定元素
+     */
+    findIndexOfObject: function (_id, _val) {
+        var _this = z3DObj;
+        for (var i = 0; i < _this.objects.length; i++) {
+            if (_this.objects[i].type != "Object3D") {
                 if (_this.objects[i][_id] == _val) return i;
             }
         }
@@ -2339,24 +2364,25 @@ z3D.prototype.opcabinetdoor = function (_obj, _serverData, func) {
         _objparent.add(tempobj);
     }
     _obj.doorState = (doorstate == "close" ? "open" : "close");
+    //获得门所在得Object3D对象数据
+    var OP = {};
+    if (tempobj.pid != null && tempobj.pid != 'undefined') {
+        OP.uuid = tempobj.pid;
+        OP.position = tempobj.pPosition;
+        console.log(tempobj.pid);
+        console.log(tempobj.pPosition);
+    } else {
+        OP.uuid = _obj.parent.uuid;
+        OP.position = _obj.parent.position;
+        console.log(_obj.parent.uuid);
+        console.log(_obj.parent.position);
+    }
     if (_obj.doorState == "open") {
         if (serverData != null && serverData != 'undefined') {
-            var OP = {};
-            if (tempobj.pid != null && tempobj.pid != 'undefined') {
-                OP.uuid = tempobj.pid;
-                OP.position = tempobj.pPosition;
-                console.log(tempobj.pid);
-                console.log(tempobj.pPosition);
-            } else {
-                OP.uuid = _obj.parent.uuid;
-                OP.position = _obj.parent.position;
-                console.log(_obj.parent.uuid);
-                console.log(_obj.parent.position);
-            }
             _this.createServerData(OP, _serverData);
         }
     } else {
-
+        _this.clearServerCube(OP);
     }
     new createjs.Tween(tempobj.rotation).to({
         y: (doorstate == "close" ? 0.25 * 2 * Math.PI : 0 * 2 * Math.PI)
