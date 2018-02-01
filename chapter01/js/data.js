@@ -657,28 +657,22 @@ var serverData = [ //主机1
     {
         uuid: "",
         name: 'equipment_card_1',
-        serverType:"Type1",
-        x: -200,
-        y: 105,
-        z: -180
+        serverType: "Type1",
+        order: "1"
     },
     //主机2
     {
         uuid: "",
         name: 'equipment_card_2',
-        serverType:"Type2",
-        x: -100,
-        y: 120,
-        z: -180
+        serverType: "Type2",
+        order: "2"
     },
     //主机3
     {
         uuid: "",
         name: 'equipment_card_3',
-        serverType:"Type3",
-        x: -100,
-        y: 145,
-        z: -180
+        serverType: "Type3",
+        order: "3"
     },
 ];
 
@@ -755,6 +749,8 @@ var baseBtns = [{
             zstation = new z3D();
             zstation.initz3D(canvasId, initOption, baseData);
             zstation.start();
+            //加载机柜数据
+            z3DObj.createEmptyCabinetData(eCData);
         }
     },
     {

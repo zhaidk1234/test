@@ -57,6 +57,7 @@ z3D.prototype.initz3D = function (_fId, _option, _basedata, _datajson) {
     this.positions = []; //
     this.wallpoints = []; //墙体点位数据
     this.serverRotation = null; //服务器旋转角度
+    this.cabinetHeight = 200; //服务器旋转角度
 
     this.mouseClick = new THREE.Vector2();
     this.raycaster = new THREE.Raycaster();
@@ -982,7 +983,7 @@ z3D.prototype.createEmptyCabinetData = function (_CabinetObj) {
                 size: {
                     length: 66,
                     width: 70,
-                    height: 200,
+                    height: _this.cabinetHeight,
                     thick: 2
                 },
                 position: {
@@ -1334,7 +1335,7 @@ z3D.prototype.createServerData = function (_Pobj, _ServerObj) {
     var serverSkinBehindUrl = "images/server1.jpg";
     var serverSkinOtherUrl = "images/rack_inside.jpg";
     var serverSkinColor = 0xff0000;
-
+    var cabinetHeight = _this.cabinetHeight;
     var serverStyle = {};
     $.each(_ServerObj, function (index, _sobj) {
         if (_sobj.serverType != null && typeof (_sobj.serverType) != 'undefined') {
@@ -1441,6 +1442,7 @@ z3D.prototype.createServerData = function (_Pobj, _ServerObj) {
                 };
                 break;
         }
+        cabinetHeight = cabinetHeight - serverHeight;
         var serverObj = {
             show: true,
             uuid: _sobj.uuid || _this.commonFunc.guid(),
@@ -1451,7 +1453,7 @@ z3D.prototype.createServerData = function (_Pobj, _ServerObj) {
             width: 65,
             height: serverHeight,
             x: 0, //parentObj.position.x
-            y: _sobj.y || 0,
+            y: cabinetHeight + serverHeight / 2 || 0,
             z: 0, //parentObj.position.z
             rotation: _sobj.rotation || serverRotation, //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
             style: _sobj.style || serverStyle
