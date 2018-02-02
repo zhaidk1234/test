@@ -130,6 +130,12 @@ z3D.prototype.initThree = function () {
     //鼠标事件监听
     _this.renderer.domElement.addEventListener('mousedown', _this.onDocumentMouseDown, false);
     _this.renderer.domElement.addEventListener('mousemove', _this.onDocumentMouseMove, false);
+    _this.renderer.domElement.addEventListener('mouseover', function (event) {
+        _this.controls.enabled = true;
+    });
+    _this.renderer.domElement.addEventListener('mouseout', function (event) {
+        _this.controls.enabled = false;
+    });
 };
 
 /**
@@ -272,13 +278,6 @@ z3D.prototype.initMouseCtrl = function () {
         RIGHT: 39, // right arrow
         BOTTOM: 40 // down arrow
     };
-    var canvasF = document.getElementById(_this.fId);
-    canvasF.addEventListener('mouseover', function (event) {
-        _this.controls.enabled = true;
-    });
-    canvasF.addEventListener('mouseout', function (event) {
-        _this.controls.enabled = false;
-    });
 };
 /**
  * 变换控制器
