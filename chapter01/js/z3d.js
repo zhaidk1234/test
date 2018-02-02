@@ -2741,7 +2741,7 @@ z3D.prototype.cabinetRateView = {
                 _this.cabinetRateBoxHelpers.push(bboxHelper);
                 _this.scene.add(bboxHelper);
 
-                var eCcube = _this.createCabinetCube(_obj, 0xff0000, 0.8, Math.random() * 200);
+                var eCcube = _this.createCabinetCube(_obj, Math.random() * 0xff0000, 0.8, Math.random() * 200);
 
             });
         }
