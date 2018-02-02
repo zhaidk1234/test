@@ -765,7 +765,15 @@ var baseBtns = [{
         btnid: "btn_usage",
         btnTitle: "机柜利用率",
         btnimg: "images/icons/usage.png",
-        event: function () {}
+        event: function () {
+            var obj =  z3DObj.commonFunc.findObject('test');
+            new createjs.Tween.get(obj.scale).to({
+                y: 100
+            }, 1000, createjs.Ease.linear);
+            new createjs.Tween.get(obj.position).to({
+                y: 105
+            }, 1000, createjs.Ease.linear);
+        }
     },
     {
         btnid: "btn_edit",

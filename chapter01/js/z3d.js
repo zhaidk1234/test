@@ -272,7 +272,13 @@ z3D.prototype.initMouseCtrl = function () {
         RIGHT: 39, // right arrow
         BOTTOM: 40 // down arrow
     };
-    //_this.controls.addEventListener('change', _this.updateControls);
+    var canvasF = document.getElementById(_this.fId);
+    canvasF.addEventListener('mouseover', function (event) {
+        _this.controls.enabled = true;
+    });
+    canvasF.addEventListener('mouseout', function (event) {
+        _this.controls.enabled = false;
+    });
 };
 /**
  * 变换控制器
@@ -413,6 +419,55 @@ z3D.prototype.animation = function () {
 z3D.prototype.initObject = function () {
 
     var _this = this;
+    var cube = {
+        show: true,
+        name: 'test',
+        shellname: '_shell',
+        uuid: _this.commonFunc.guid(),
+        rotation: [{
+            state: "local", //旋转坐标系（自身local，世界word）
+            direction: 'y', //旋转坐标轴
+            degree: 0.5 * Math.PI //Math.PI 等于180度,沿坐标轴逆时针旋转
+        }], //基于坐标轴旋转,
+        objType: 'cube',
+        transparent: true,
+        length: 66,
+        width: 70,
+        height: 2,
+        thick: 2,
+        x: 0,
+        y: 0,
+        z: 0,
+        style: {
+            skinColor: 0xff0000,
+            skin_up: {
+                skin: {
+                    skinColor: 0x333333,
+                }
+            },
+            skin_down: {
+                skin: {
+                    skinColor: 0x333333,
+                }
+            },
+            skin_left: {
+                skin: {
+                    skinColor: 0x333333,
+                }
+            },
+            skin_right: {
+                skin: {
+                    skinColor: 0x333333,
+                }
+            },
+            skin_behind: {
+                skin: {
+                    skinColor: 0x333333,
+                }
+            }
+        }
+    };
+    _this.InitAddBaseObject(cube);
 };
 /**
  * 读取节点数据
@@ -964,10 +1019,10 @@ z3D.prototype.createEmptyCabinetData = function (_CabinetObj) {
     //机柜数据
     var EmptyCabinetData = [];
     if (_CabinetObj.length > 0) {
-        //创建墙体基本数据
+        //创建机柜基本数据
         for (var i = 0; i < _CabinetObj.length; i++) {
             var cabinetName = 'cabinet' + _this.commonFunc.guid();
-            //每一面墙的数据
+            //机柜的数据
             var cabinet = {
                 show: _CabinetObj[i].show || true,
                 name: _CabinetObj[i].name || cabinetName,
@@ -2437,7 +2492,7 @@ z3D.prototype.opcabinetdoor = function (_obj, _serverData, func) {
         OP.position = _obj.parent.position;
     }
     if (_obj.doorState == "open") {
-        if (serverData != null && serverData != 'undefined') {
+        if (_serverData != null && _serverData != 'undefined') {
             _this.createServerData(OP, _serverData);
         }
     } else {
