@@ -278,6 +278,7 @@ z3D.prototype.initMouseCtrl = function () {
         RIGHT: 39, // right arrow
         BOTTOM: 40 // down arrow
     };
+    _this.controls.enabled = false;
 };
 /**
  * 变换控制器
@@ -416,57 +417,7 @@ z3D.prototype.animation = function () {
  * 增加测试对象
  */
 z3D.prototype.initObject = function () {
-
     var _this = this;
-    var cube = {
-        show: true,
-        name: 'test',
-        shellname: '_shell',
-        uuid: _this.commonFunc.guid(),
-        rotation: [{
-            state: "local", //旋转坐标系（自身local，世界word）
-            direction: 'y', //旋转坐标轴
-            degree: 0.5 * Math.PI //Math.PI 等于180度,沿坐标轴逆时针旋转
-        }], //基于坐标轴旋转,
-        objType: 'cube',
-        transparent: true,
-        length: 66,
-        width: 70,
-        height: 2,
-        thick: 2,
-        x: 0,
-        y: 0,
-        z: 0,
-        style: {
-            skinColor: 0xff0000,
-            skin_up: {
-                skin: {
-                    skinColor: 0x333333,
-                }
-            },
-            skin_down: {
-                skin: {
-                    skinColor: 0x333333,
-                }
-            },
-            skin_left: {
-                skin: {
-                    skinColor: 0x333333,
-                }
-            },
-            skin_right: {
-                skin: {
-                    skinColor: 0x333333,
-                }
-            },
-            skin_behind: {
-                skin: {
-                    skinColor: 0x333333,
-                }
-            }
-        }
-    };
-    _this.InitAddBaseObject(cube);
 };
 /**
  * 读取节点数据
@@ -885,6 +836,7 @@ z3D.prototype.createCube = function (_this, _obj) {
         _y = _obj.y || 0,
         _z = _obj.z || 0;
     var skinColor = _obj.style.skinColor || 0x98750f;
+    var skinOpacity = _obj.style.opacity || 1;
     var cubeGeometry = new THREE.CubeGeometry(_length, _height, _width, 0, 0, 1);
 
     //六面颜色
@@ -895,7 +847,8 @@ z3D.prototype.createCube = function (_this, _obj) {
     }
     //六面纹理
     var skin_up_obj = {
-        vertexColors: THREE.FaceColors
+        vertexColors: THREE.FaceColors,
+        transparent:true
     };
     var skin_down_obj = skin_up_obj,
         skin_fore_obj = skin_up_obj,
@@ -932,6 +885,7 @@ z3D.prototype.createCube = function (_this, _obj) {
     cubeMaterialArray.push(new THREE.MeshLambertMaterial(skin_left_obj));
     var cubeMaterials = new THREE.MeshFaceMaterial(cubeMaterialArray);
     cube = new THREE.Mesh(cubeGeometry, cubeMaterials); //贴纹理
+    cube.transparent = true;
     cube.castShadow = true;
     cube.receiveShadow = true;
     cube.uuid = _obj.uuid;
@@ -1367,6 +1321,74 @@ z3D.prototype.createEmptyCabinet = function (_this, _obj) {
     return tempobj;
 };
 /**
+ * 创建空机柜模型
+ * @param {*} _this 
+ * @param {*} _obj 
+ */
+z3D.prototype.createCabinetCube = function (_obj) {
+    var _this = z3DObj;
+    var CabinetCubeName = 'test' + _this.commonFunc.guid();
+    var CabinetCubeSkinColor = 0xff0000;
+    var CabinetCubeSkinOpacity = 0.8;
+    var cube = {
+        show: true,
+        name: CabinetCubeName,
+        shellname: '_shell',
+        uuid: _this.commonFunc.guid(),
+        rotation: _this.serverRotation, //基于坐标轴旋转,
+        objType: 'cube',
+        transparent: true,
+        length: 62,
+        width: 66,
+        height: 2,
+        thick: 2,
+        x: _obj.position.x || 0,
+        y: 0,
+        z: _obj.position.z || 0,
+        style: {
+            skinColor: CabinetCubeSkinColor,
+            opacity: CabinetCubeSkinOpacity,
+            skin: {
+                skin_up: {
+                    skinColor: CabinetCubeSkinColor,
+                    opacity: CabinetCubeSkinOpacity,
+                },
+                skin_down: {
+                    skinColor: CabinetCubeSkinColor,
+                    opacity: CabinetCubeSkinOpacity,
+                },
+                skin_left: {
+                    skinColor: CabinetCubeSkinColor,
+                    opacity: CabinetCubeSkinOpacity,
+                },
+                skin_right: {
+                    skinColor: CabinetCubeSkinColor,
+                    opacity: CabinetCubeSkinOpacity,
+                },
+                skin_behind: {
+                    skinColor: CabinetCubeSkinColor,
+                    opacity: CabinetCubeSkinOpacity,
+                }
+            }
+        }
+    };
+    _this.InitAddBaseObject(cube);
+    //动画展示
+    var resObj = z3DObj.commonFunc.findObject(CabinetCubeName);
+    new createjs.Tween.get(resObj.scale).to({
+        y: 100
+    }, 1000, createjs.Ease.linear);
+    new createjs.Tween.get(resObj.position).to({
+        y: 105
+    }, 1000, createjs.Ease.linear);
+    //清除对象
+    setTimeout(function(){
+        _this.scene.remove(resObj);
+        _this.commonFunc.removeInObject('uuid',resObj.uuid);
+    },1100);
+    return resObj;
+};
+/**
  * 创建服务器数据
  * @param {*} _Pobj 父节点
  * @param {*} _ServerObj 
@@ -1597,7 +1619,8 @@ z3D.prototype.createSkinOptionOnj = function (_this, flength, fwidth, _obj, _cub
         if (_this.commonFunc.hasObj(_obj.imgurl)) {
             return {
                 map: _this.createSkin(flength, fwidth, _obj),
-                transparent: true
+                transparent: true,
+                opacity: _obj.opacity || 1
             };
         } else {
             if (_this.commonFunc.hasObj(_obj.skinColor)) {
@@ -1605,12 +1628,14 @@ z3D.prototype.createSkinOptionOnj = function (_this, flength, fwidth, _obj, _cub
                 _cube.faces[_cubefacenub + 1].color.setHex(_obj.skinColor);
             }
             return {
-                vertexColors: THREE.FaceColors
+                vertexColors: THREE.FaceColors,
+                transparent: true,
+                opacity: _obj.opacity || 1
             };
         }
     } else {
         return {
-            vertexColors: THREE.FaceColors
+            vertexColors: THREE.FaceColors,
         };
     }
 };
@@ -2492,7 +2517,10 @@ z3D.prototype.opcabinetdoor = function (_obj, _serverData, func) {
     }
     if (_obj.doorState == "open") {
         if (_serverData != null && _serverData != 'undefined') {
-            _this.createServerData(OP, _serverData);
+            var eCcube = _this.createCabinetCube(OP);
+            setTimeout(function(){
+                _this.createServerData(OP, _serverData);
+            },1000);
         }
     } else {
         _this.clearServerCube(OP);
@@ -2533,7 +2561,6 @@ z3D.prototype.openServer = function (_obj, func) {
             }
         });
     }
-
     new createjs.Tween(_obj.position).to({
         x: (cardstate == "in" ? _obj.position.x - x : _obj.position.x + x),
         z: (cardstate == "in" ? _obj.position.z - z : _obj.position.z + z),
