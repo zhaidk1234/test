@@ -73,7 +73,10 @@ z3D.prototype.initz3D = function (_fId, _option, _basedata, _datajson) {
 
     this.editState = 0; //编辑状态，0为不可编辑，1为可编辑
     this.moveState = 0; //机柜移动状态，0为不可移动，1为可移动
+    this.cabinetRateState = 0; //机柜利用状态, 0为不显示,1为显示
     this.hiding = null; //拖动组件隐藏状态
+
+    this.cabinetRateBoxHelpers = []; //对象辅助线集合
 
     var _this = this;
 };
@@ -848,7 +851,7 @@ z3D.prototype.createCube = function (_this, _obj) {
     //六面纹理
     var skin_up_obj = {
         vertexColors: THREE.FaceColors,
-        transparent:true
+        transparent: true
     };
     var skin_down_obj = skin_up_obj,
         skin_fore_obj = skin_up_obj,
@@ -1322,14 +1325,17 @@ z3D.prototype.createEmptyCabinet = function (_this, _obj) {
 };
 /**
  * 创建空机柜模型
- * @param {*} _this 
  * @param {*} _obj 
+ * @param {*} _color 
+ * @param {*} _alpha 
+ * @param {*} _height 
  */
-z3D.prototype.createCabinetCube = function (_obj) {
+z3D.prototype.createCabinetCube = function (_obj, _color, _alpha, _height) {
     var _this = z3DObj;
     var CabinetCubeName = 'test' + _this.commonFunc.guid();
-    var CabinetCubeSkinColor = 0xff0000;
-    var CabinetCubeSkinOpacity = 0.8;
+    var CabinetCubeSkinColor = _color || 0xff0000;
+    var CabinetCubeSkinOpacity = _alpha || 0.8;
+    var CabinetCubeHeight = _height || 200;
     var cube = {
         show: true,
         name: CabinetCubeName,
@@ -1376,18 +1382,27 @@ z3D.prototype.createCabinetCube = function (_obj) {
     //动画展示
     var resObj = z3DObj.commonFunc.findObject(CabinetCubeName);
     new createjs.Tween.get(resObj.scale).to({
-        y: 100
+        y: CabinetCubeHeight / 2
     }, 1000, createjs.Ease.linear);
     new createjs.Tween.get(resObj.position).to({
-        y: 105
+        y: CabinetCubeHeight / 2
     }, 1000, createjs.Ease.linear);
-    //清除对象
-    setTimeout(function(){
-        _this.scene.remove(resObj);
-        _this.commonFunc.removeInObject('uuid',resObj.uuid);
-    },1100);
+
     return resObj;
 };
+/**
+ * 清除空机柜模型
+ * @param {*} _obj 
+ * @param {*} _color 
+ * @param {*} _alpha 
+ * @param {*} _height 
+ */
+z3D.prototype.clearCabinetCube = function (_obj) {
+    var _this = z3DObj;
+    _this.scene.remove(_obj);
+    _this.commonFunc.removeInObject('uuid', _obj.uuid);
+};
+
 /**
  * 创建服务器数据
  * @param {*} _Pobj 父节点
@@ -1400,7 +1415,7 @@ z3D.prototype.createServerData = function (_Pobj, _ServerObj) {
     //主机数数据
     var ServerData = [];
     //主机模板
-    var serverType = "Type1";
+    var serverType = "is_database";
     var serverName = "equipment_card_" + _this.commonFunc.guid();
     var serverHeight = 10;
     var serverRotation = [{
@@ -1417,107 +1432,10 @@ z3D.prototype.createServerData = function (_Pobj, _ServerObj) {
         if (_sobj.serverType != null && typeof (_sobj.serverType) != 'undefined') {
             serverType = _sobj.serverType;
         }
-        switch (serverType) {
-            case 'Type1':
-                serverHeight = 10;
-                serverSkinBehindUrl = "images/server1.jpg";
-                serverStyle = {
-                    skinColor: serverSkinColor,
-                    skin: {
-                        skin_up: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_down: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_fore: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_behind: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinBehindUrl,
-                        },
-                        skin_left: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_right: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        }
-                    }
-                };
-                break;
-            case 'Type2':
-                serverHeight = 20;
-                serverSkinBehindUrl = "images/server2.jpg";
-                serverStyle = {
-                    skinColor: serverSkinColor,
-                    skin: {
-                        skin_up: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_down: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_fore: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_behind: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinBehindUrl,
-                        },
-                        skin_left: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_right: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        }
-                    }
-                };
-                break;
-            case 'Type3':
-                serverHeight = 30;
-                serverSkinBehindUrl = "images/server3.jpg";
-                serverStyle = {
-                    skinColor: serverSkinColor,
-                    skin: {
-                        skin_up: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_down: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_fore: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_behind: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinBehindUrl,
-                        },
-                        skin_left: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        },
-                        skin_right: {
-                            skinColor: serverSkinColor,
-                            imgurl: serverSkinOtherUrl,
-                        }
-                    }
-                };
-                break;
-        }
+        var res = _this.commonFunc.switchServerType(serverType, serverSkinColor, serverSkinOtherUrl);
+        serverHeight = res.serverHeight;
+        serverSkinBehindUrl = res.serverSkinBehindUrl;
+        serverStyle = res.serverStyle;
         cabinetHeight = cabinetHeight - serverHeight;
         var serverObj = {
             show: true,
@@ -2296,6 +2214,203 @@ z3D.prototype.commonFunc = {
         _obj3d.position.set(cp0.x, 0, cp0.z);
     },
     /**
+     * 根据服务器类型,返回相应数据
+     * @returns {}
+     */
+    switchServerType: function (_type, _color, _url) {
+        var _this = z3DObj;
+        var serverSkinColor = _color;
+        var serverSkinOtherUrl = _url;
+        var serverHeight = 0;
+        var serverSkinBehindUrl = "";
+        var serverStyle = {};
+        switch (_type) {
+            case 'is_database':
+                serverHeight = 10;
+                serverSkinBehindUrl = "images/server1.jpg";
+                serverStyle = {
+                    skinColor: serverSkinColor,
+                    skin: {
+                        skin_up: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_down: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_fore: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_behind: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinBehindUrl,
+                        },
+                        skin_left: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_right: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        }
+                    }
+                };
+                break;
+            case 'is_server':
+                serverHeight = 20;
+                serverSkinBehindUrl = "images/server2.jpg";
+                serverStyle = {
+                    skinColor: serverSkinColor,
+                    skin: {
+                        skin_up: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_down: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_fore: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_behind: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinBehindUrl,
+                        },
+                        skin_left: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_right: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        }
+                    }
+                };
+                break;
+            case 'Type3':
+                serverHeight = 30;
+                serverSkinBehindUrl = "images/server3.jpg";
+                serverStyle = {
+                    skinColor: serverSkinColor,
+                    skin: {
+                        skin_up: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_down: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_fore: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_behind: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinBehindUrl,
+                        },
+                        skin_left: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        },
+                        skin_right: {
+                            skinColor: serverSkinColor,
+                            imgurl: serverSkinOtherUrl,
+                        }
+                    }
+                };
+                break;
+        }
+        var res = {
+            serverHeight: serverHeight,
+            serverSkinBehindUrl: serverSkinBehindUrl,
+            serverStyle: serverStyle
+        };
+        return res;
+    },
+    gradientColor: function (startColor, endColor, step) {
+        startRGB = this.colorRgb(startColor); //转换为rgb数组模式
+        startR = startRGB[0];
+        startG = startRGB[1];
+        startB = startRGB[2];
+        endRGB = this.colorRgb(endColor);
+        endR = endRGB[0];
+        endG = endRGB[1];
+        endB = endRGB[2];
+        sR = (endR - startR) / step; //总差值
+        sG = (endG - startG) / step;
+        sB = (endB - startB) / step;
+        var colorArr = [];
+        for (var i = 0; i < step; i++) {
+            //计算每一步的hex值 
+            var hex = this.colorHex('rgb(' + parseInt((sR * i + startR)) + ',' + parseInt((sG * i + startG)) + ',' + parseInt((sB * i + startB)) + ')');
+            colorArr.push(hex);
+        }
+        // 将hex表示方式转换为rgb表示方式(这里返回rgb数组模式)
+        gradientColor.prototype.colorRgb = function (sColor) {
+            var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+            var sColor = sColor.toLowerCase();
+            if (sColor && reg.test(sColor)) {
+                if (sColor.length === 4) {
+                    var sColorNew = "#";
+                    for (var i = 1; i < 4; i += 1) {
+                        sColorNew += sColor.slice(i, i + 1).concat(sColor.slice(i, i + 1));
+                    }
+                    sColor = sColorNew;
+                }
+                //处理六位的颜色值
+                var sColorChange = [];
+                for (var i = 1; i < 7; i += 2) {
+                    sColorChange.push(parseInt("0x" + sColor.slice(i, i + 2)));
+                }
+                return sColorChange;
+            } else {
+                return sColor;
+            }
+        };
+        // 将rgb表示方式转换为hex表示方式
+        gradientColor.prototype.colorHex = function (rgb) {
+            var _this = rgb;
+            var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+            if (/^(rgb|RGB)/.test(_this)) {
+                var aColor = _this.replace(/(?:(|)|rgb|RGB)*/g, "").split(",");
+                var strHex = "#";
+                for (var i = 0; i < aColor.length; i++) {
+                    var hex = Number(aColor[i]).toString(16);
+                    hex = hex < 10 ? 0 + '' + hex : hex; // 保证每个rgb的值为2位
+                    if (hex === "0") {
+                        hex += hex;
+                    }
+                    strHex += hex;
+                }
+                if (strHex.length !== 7) {
+                    strHex = _this;
+                }
+                return strHex;
+            } else if (reg.test(_this)) {
+                var aNum = _this.replace(/#/, "").split("");
+                if (aNum.length === 6) {
+                    return _this;
+                } else if (aNum.length === 3) {
+                    var numHex = "#";
+                    for (var i = 0; i < aNum.length; i += 1) {
+                        numHex += (aNum[i] + aNum[i]);
+                    }
+                    return numHex;
+                }
+            } else {
+                return _this;
+            }
+        };
+
+        return colorArr;
+    },
+
+    /**
      * 生成UUID
      */
     guid: function () {
@@ -2517,10 +2632,15 @@ z3D.prototype.opcabinetdoor = function (_obj, _serverData, func) {
     }
     if (_obj.doorState == "open") {
         if (_serverData != null && _serverData != 'undefined') {
-            var eCcube = _this.createCabinetCube(OP);
-            setTimeout(function(){
+            var eCcube = _this.createCabinetCube(OP, 0xff0000, 0.8, 200);
+            //清除对象
+            setTimeout(function () {
+                _this.clearCabinetCube(eCcube);
+            }, 1100);
+            //创建主机
+            setTimeout(function () {
                 _this.createServerData(OP, _serverData);
-            },1000);
+            }, 1000);
         }
     } else {
         _this.clearServerCube(OP);
@@ -2567,4 +2687,96 @@ z3D.prototype.openServer = function (_obj, func) {
     }, 1000, createjs.Ease.linear).call(function () {
         _obj.cardstate = cardstate == "in" ? "out" : "in";
     });
+};
+
+/**
+ * 机柜利用率显示
+ * @param {*} _obj 
+ * @param {*} func 
+ */
+z3D.prototype.cabinetRateView = {
+    /**
+     * 初始化利用率方法
+     */
+    initRate: function () {
+        var _this = z3DObj;
+        _this.cabinetRateState = _this.cabinetRateState == 0 ? 1 : 0;
+        //找到所有机柜
+        var ecObjs = [];
+        $.each(_this.objects, function (index, _obj) {
+            if (_obj.type == "Object3D") {
+                ecObjs.push(_obj);
+            }
+        });
+        if (_this.cabinetRateState) {
+            _this.cabinetRateView.showRate(ecObjs);
+        } else {
+            _this.cabinetRateView.hideRate(ecObjs);
+        }
+    },
+    /**
+     * 展示利用率
+     */
+    showRate: function (_objs, func) {
+        var _this = z3DObj;
+        if (_objs != null) {
+            $.each(_objs, function (index, _obj) {
+                if (_obj != null) {
+                    if (_this.commonFunc.hasObj(_obj.children) && _obj.children.length > 0) {
+                        var count = _obj.children.length;
+                        //遍历并清楚所有主机
+                        for (var i = 0; i < count; i++) {
+                            var sCube = _obj.children[i];
+                            //将所有纹理清楚
+                            if (_this.commonFunc.hasObj(sCube.material) && sCube.material.length > 0) {
+                                var materialOld = new Object();
+                                materialOld = sCube.material;
+                                sCube.material = [];
+                                sCube.materialOld = materialOld;
+                            }
+                        }
+                    }
+                }
+                var bboxHelper = new THREE.BoxHelper(_obj, 0x999999);
+                _this.cabinetRateBoxHelpers.push(bboxHelper);
+                _this.scene.add(bboxHelper);
+
+                var eCcube = _this.createCabinetCube(_obj, 0xff0000, 0.8, Math.random() * 200);
+
+            });
+        }
+    },
+    /**
+     * 关闭利用率
+     */
+    hideRate: function (_objs, func) {
+        var _this = z3DObj;
+        if (_objs != null) {
+            $.each(_objs, function (index, _obj) {
+                if (_obj != null) {
+                    if (_this.commonFunc.hasObj(_obj.children) && _obj.children.length > 0) {
+                        var count = _obj.children.length;
+                        //遍历并清楚所有主机
+                        for (var i = 0; i < count; i++) {
+                            var sCube = _obj.children[i];
+                            //将所有纹理还原                            
+                            if (_this.commonFunc.hasObj(sCube.materialOld) && sCube.materialOld.length > 0) {
+                                var materialOld = new Object();
+                                materialOld = sCube.materialOld;
+                                sCube.materialOld = [];
+                                sCube.material = materialOld;
+                            }
+                        }
+                    }
+                }
+
+            });
+            //查找所有对象辅助线,并删除
+            if (_this.cabinetRateBoxHelpers != null && _this.cabinetRateBoxHelpers.length > 0) {
+                $.each(_this.cabinetRateBoxHelpers, function (index, _obj) {
+                    _this.scene.remove(_obj);
+                });
+            }
+        }
+    }
 };

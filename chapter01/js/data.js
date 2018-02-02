@@ -657,14 +657,14 @@ var serverData = [ //主机1
     {
         uuid: "",
         name: 'equipment_card_1',
-        serverType: "Type1",
+        serverType: "is_database",
         order: "1"
     },
     //主机2
     {
         uuid: "",
         name: 'equipment_card_2',
-        serverType: "Type2",
+        serverType: "is_server",
         order: "2"
     },
     //主机3
@@ -766,13 +766,7 @@ var baseBtns = [{
         btnTitle: "机柜利用率",
         btnimg: "images/icons/usage.png",
         event: function () {
-            var obj =  z3DObj.commonFunc.findObject('test');
-            new createjs.Tween.get(obj.scale).to({
-                y: 100
-            }, 1000, createjs.Ease.linear);
-            new createjs.Tween.get(obj.position).to({
-                y: 105
-            }, 1000, createjs.Ease.linear);
+            z3DObj.cabinetRateView.initRate();
         }
     },
     {
