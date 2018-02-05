@@ -74,12 +74,14 @@ z3D.prototype.initz3D = function (_fId, _option, _basedata, _datajson) {
     this.editState = 0; //编辑状态，0为不可编辑，1为可编辑
     this.moveState = 0; //机柜移动状态，0为不可移动，1为可移动
     this.cabinetRateState = 0; //机柜利用状态, 0为不显示,1为显示
+    this.alarmState = 0; //机柜利用状态, 0为不显示,1为显示
     this.hiding = null; //拖动组件隐藏状态
 
     this.cabinetRateBoxHelpers = []; //对象辅助线集合
     this.cabinetRateCube = []; //生成对象集合
 
     this.alarmTipsArr = []; //告警标志
+    this.alarmServersArr = []; //告警标志
 
     var _this = this;
 };
@@ -352,6 +354,79 @@ z3D.prototype.initCoordinates = function (_position) {
         cooDiv.style.left = p.x + 10 + 'px';
         cooDiv.innerHTML = html;
         $("#" + _this.fId).append(cooDiv);
+    }
+};
+/**
+ * 创建告警提示框
+ * @param {*} _position 
+ * @param {*} _context {
+ * 
+ * }
+ */
+z3D.prototype.initAlarmInfo = {
+    /**
+     * 初始化提示框
+     */
+    init: function (_obj) {
+        var _this = z3DObj;
+        if (_obj != null) {
+            var _context = _this.initAlarmInfo.findAlarmInfoById(_obj.uuid);
+            //坐标显示拼接
+            var html = '';
+            html += '<table style="color:#000000;">';
+            html += '<tr>';
+            html += '<td>设备编号:</td>';
+            html += '<td>' + _obj.uuid + '</td>';
+            html += '</tr>';
+            html += '<tr>';
+            html += '<td>设备名称:</td>';
+            html += '<td>' + _obj.name + '</td>';
+            html += '</tr>';
+            html += '<tr>';
+            html += '<td>告警信息:</td>';
+            html += '<td>' + _context + '</td>';
+            html += '</tr>';
+            html += '</table>';
+            var cDiv = document.getElementById("alarmInfo");
+            var p = _this.commonFunc.convertToSceenCoordinate({
+                x:_obj.parent.position.x,
+                y:_obj.position.y,
+                z:_obj.parent.position.z
+            });
+            if (cDiv != null) {
+                cDiv.style.top = p.y + 10 + 'px';
+                cDiv.style.left = p.x + 10 + 'px';
+                cDiv.style.display = 'block';
+                cDiv.innerHTML = html;
+            } else {
+                var cooDiv = document.createElement("div");
+                cooDiv.id = "alarmInfo";
+                cooDiv.style.position = 'absolute';
+                cooDiv.style.padding = '5px';
+                cooDiv.style.backgroundColor = '#f9f21f3d';
+                cooDiv.style.display = 'block';
+                cooDiv.style.top = p.y + 10 + 'px';
+                cooDiv.style.left = p.x + 10 + 'px';
+                cooDiv.innerHTML = html;
+                $("#" + _this.fId).append(cooDiv);
+            }
+        }
+    },
+    /**
+     * 关闭告警提示窗
+     */
+    hide: function () {
+        var cDiv = document.getElementById("alarmInfo");
+        if (cDiv != null) {
+            cDiv.style.display = 'none';
+        }
+    },
+    /**
+     * 根据设备uuid查找错误信息
+     */
+    findAlarmInfoById: function (_uuid) {
+        var _this = this;
+        return '这是错误信息';
     }
 };
 /**
@@ -1493,9 +1568,11 @@ z3D.prototype.createServerCube = function (_this, _obj) {
     //重新添加对象
     _this.addObject(cabinet);
     //判断是否有告警信息
-    if (_this.commonFunc.hasObj(_obj.alarmLevel)) {
+    if (_this.commonFunc.hasObj(_obj.alarmLevel) && _this.alarmState) {
         var levelColor = _this.commonFunc.switchAlarmLevel(_obj.alarmLevel);
         _this.commonFunc.setSkinColorById(_obj.uuid, levelColor);
+        _sCube.isAlarm = true;
+        _this.alarmServersArr.push(_sCube);
     }
 };
 /**
@@ -1520,7 +1597,6 @@ z3D.prototype.clearServerCube = function (_obj) {
             }
         }
     }
-    console.log(cabinet);
     //重新添加对象
     _this.addObject(cabinet);
 };
@@ -1551,7 +1627,8 @@ z3D.prototype.createAlarmTips = function (_objs) {
     var _this = z3DObj;
     //清除原有告警
     _this.clearAlarmTips();
-    if (_objs != null && _objs.length > 0) {
+    _this.alarmState = _this.alarmState == 0 ? 1 : 0;
+    if (_objs != null && _objs.length > 0 && _this.alarmState) {
         $.each(_objs, function (index, _obj) {
             var level = _obj.level || '1';
             var parentCabinet = _this.commonFunc.findObject3DByUUID(_obj.pid);
@@ -1572,6 +1649,8 @@ z3D.prototype.createAlarmTips = function (_objs) {
             _this.alarmTipsArr.push(alarmTip);
             //转换颜色
             if (parentServer != null) {
+                parentServer.isAlarm = true;
+                _this.alarmServersArr.push(parentServer);
                 _this.commonFunc.setSkinColorById(parentServer.uuid, levelColor);
             }
             _this.addObject(alarmTip);
@@ -1582,7 +1661,7 @@ z3D.prototype.createAlarmTips = function (_objs) {
  * 根据告警信息改变服务器颜色
  * @param {*} _obj 
  */
-z3D.prototype.createServerAlarmTips = function (_obj,_level) {
+z3D.prototype.createServerAlarmTips = function (_obj, _level) {
     var _this = z3DObj;
     var parentServer = null;
     var level = _level || '1';
@@ -1607,6 +1686,13 @@ z3D.prototype.clearAlarmTips = function () {
             _this.scene.remove(_tip);
         });
         _this.alarmTipsArr = [];
+    }
+    if (_this.alarmServersArr.length > 0) {
+        $.each(_this.alarmServersArr, function (index, _ser) {
+            _this.commonFunc.setSkinColorById(_ser.uuid, 0x000000);
+            delete _ser.isAlarm;
+        });
+        _this.alarmServersArr = [];
     }
 };
 /**
@@ -2074,11 +2160,11 @@ z3D.prototype.commonFunc = {
         context.lineWidth = borderThickness;
         context.fillStyle = "rgba(" + textColor.r + ", " + textColor.g + ", " + textColor.b + ", 1.0)";
         context.fillText(message, borderThickness, fontsize + borderThickness);
-        var texture = new THREE.Texture(canvas)
+        var texture = new THREE.CanvasTexture(canvas);
         texture.needsUpdate = true;
         var spriteMaterial = new THREE.SpriteMaterial({
             map: texture,
-            useScreenCoordinates: false
+            //useScreenCoordinates: false
         });
         var sprite = new THREE.Sprite(spriteMaterial);
         sprite.position.x = _fobj.position.x + x;
@@ -2563,11 +2649,21 @@ z3D.prototype.commonFunc = {
      */
     colorRGB2Hex: function (_color) {
         var color = _color.toString();
+        var hex = _this.commonFunc.colorRGBTo16(color);
+        return hex;
+    },
+    /**
+     * RGB转16进制(rgb2hex)
+     * 输入：rgb(13,0,255)
+     * 输出：0x0d00ff
+     */
+    colorRGBTo16: function (_color) {
+        var color = _color.toString();
         var rgb = color.split(',');
         var r = parseInt(rgb[0].split('(')[1]);
         var g = parseInt(rgb[1]);
         var b = parseInt(rgb[2].split(')')[0]);
-        var hex = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        var hex = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
         return hex;
     },
     /**
@@ -2676,6 +2772,12 @@ z3D.prototype.onDocumentMouseMove = function (event) {
                         }
                     });
                 }
+            }
+            //是否报警
+            if (_this.commonFunc.hasObj(_this.INTERSECTED.isAlarm) && _this.INTERSECTED.isAlarm) {
+                _this.initAlarmInfo.init(_this.INTERSECTED);
+            } else {
+                _this.initAlarmInfo.hide();
             }
         }
     } else {

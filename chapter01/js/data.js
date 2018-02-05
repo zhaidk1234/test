@@ -675,7 +675,6 @@ var serverData = [ //主机1
         name: 'equipment_card_3',
         serverType: "Type3",
         order: "3",
-        alarmLevel:'3'        
     },
 ];
 
