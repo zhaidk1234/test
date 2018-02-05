@@ -1494,11 +1494,8 @@ z3D.prototype.createServerCube = function (_this, _obj) {
     _this.addObject(cabinet);
     //判断是否有告警信息
     if (_this.commonFunc.hasObj(_obj.alarmLevel)) {
-        _this.createAlarmTips([{
-            uuid: _obj.uuid,
-            pid: _obj.CabinetId,
-            level: _obj.level
-        }]);
+        var levelColor = _this.commonFunc.switchAlarmLevel(_obj.alarmLevel);
+        _this.commonFunc.setSkinColorById(_obj.uuid, levelColor);
     }
 };
 /**
@@ -1579,6 +1576,23 @@ z3D.prototype.createAlarmTips = function (_objs) {
             }
             _this.addObject(alarmTip);
         });
+    }
+};
+/**
+ * 根据告警信息改变服务器颜色
+ * @param {*} _obj 
+ */
+z3D.prototype.createServerAlarmTips = function (_obj,_level) {
+    var _this = z3DObj;
+    var parentServer = null;
+    var level = _level || '1';
+    var levelColor = _this.commonFunc.switchAlarmLevel(level);
+    if (_this.commonFunc.hasObj(_obj.uuid)) {
+        parentServer = _this.commonFunc.findObjectByUUID(_obj.uuid);
+    }
+    //转换颜色
+    if (parentServer != null) {
+        _this.commonFunc.setSkinColorById(parentServer.uuid, levelColor);
     }
 };
 /**
