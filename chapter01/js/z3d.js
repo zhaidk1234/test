@@ -77,6 +77,7 @@ z3D.prototype.initz3D = function (_fId, _option, _basedata, _datajson) {
     this.hiding = null; //拖动组件隐藏状态
 
     this.cabinetRateBoxHelpers = []; //对象辅助线集合
+    this.cabinetRateCube = []; //生成对象集合
 
     var _this = this;
 };
@@ -1492,6 +1493,7 @@ z3D.prototype.clearServerCube = function (_obj) {
     var cabinet = _this.commonFunc.findObject3DByUUID(_obj.uuid);
     //清除原有对象    
     _this.scene.remove(cabinet);
+    _this.commonFunc.removeInObject3D('uuid', cabinet.uuid);
     if (cabinet != null) {
         if (_this.commonFunc.hasObj(cabinet.children) && cabinet.children.length > 2) {
             var count = cabinet.children.length;
@@ -2333,11 +2335,12 @@ z3D.prototype.commonFunc = {
         return res;
     },
     gradientColor: function (startColor, endColor, step) {
-        startRGB = this.colorRgb(startColor); //转换为rgb数组模式
+        var _this = z3DObj;
+        startRGB = _this.commonFunc.colorRgb(startColor); //转换为rgb数组模式
         startR = startRGB[0];
         startG = startRGB[1];
         startB = startRGB[2];
-        endRGB = this.colorRgb(endColor);
+        endRGB = _this.commonFunc.colorRgb(endColor);
         endR = endRGB[0];
         endG = endRGB[1];
         endB = endRGB[2];
@@ -2347,69 +2350,85 @@ z3D.prototype.commonFunc = {
         var colorArr = [];
         for (var i = 0; i < step; i++) {
             //计算每一步的hex值 
-            var hex = this.colorHex('rgb(' + parseInt((sR * i + startR)) + ',' + parseInt((sG * i + startG)) + ',' + parseInt((sB * i + startB)) + ')');
+            var hex = _this.commonFunc.colorHex('rgb(' + parseInt((sR * i + startR)) + ',' + parseInt((sG * i + startG)) + ',' + parseInt((sB * i + startB)) + ')');
             colorArr.push(hex);
         }
-        // 将hex表示方式转换为rgb表示方式(这里返回rgb数组模式)
-        gradientColor.prototype.colorRgb = function (sColor) {
-            var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
-            var sColor = sColor.toLowerCase();
-            if (sColor && reg.test(sColor)) {
-                if (sColor.length === 4) {
-                    var sColorNew = "#";
-                    for (var i = 1; i < 4; i += 1) {
-                        sColorNew += sColor.slice(i, i + 1).concat(sColor.slice(i, i + 1));
-                    }
-                    sColor = sColorNew;
-                }
-                //处理六位的颜色值
-                var sColorChange = [];
-                for (var i = 1; i < 7; i += 2) {
-                    sColorChange.push(parseInt("0x" + sColor.slice(i, i + 2)));
-                }
-                return sColorChange;
-            } else {
-                return sColor;
-            }
-        };
-        // 将rgb表示方式转换为hex表示方式
-        gradientColor.prototype.colorHex = function (rgb) {
-            var _this = rgb;
-            var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
-            if (/^(rgb|RGB)/.test(_this)) {
-                var aColor = _this.replace(/(?:(|)|rgb|RGB)*/g, "").split(",");
-                var strHex = "#";
-                for (var i = 0; i < aColor.length; i++) {
-                    var hex = Number(aColor[i]).toString(16);
-                    hex = hex < 10 ? 0 + '' + hex : hex; // 保证每个rgb的值为2位
-                    if (hex === "0") {
-                        hex += hex;
-                    }
-                    strHex += hex;
-                }
-                if (strHex.length !== 7) {
-                    strHex = _this;
-                }
-                return strHex;
-            } else if (reg.test(_this)) {
-                var aNum = _this.replace(/#/, "").split("");
-                if (aNum.length === 6) {
-                    return _this;
-                } else if (aNum.length === 3) {
-                    var numHex = "#";
-                    for (var i = 0; i < aNum.length; i += 1) {
-                        numHex += (aNum[i] + aNum[i]);
-                    }
-                    return numHex;
-                }
-            } else {
-                return _this;
-            }
-        };
-
         return colorArr;
     },
-
+    /**
+     * 将hex表示方式转换为rgb表示方式(这里返回rgb数组模式)
+     */
+    colorRgb: function (_sColor) {
+        var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+        var sColor = _sColor.toLowerCase();
+        if (sColor && reg.test(sColor)) {
+            if (sColor.length === 4) {
+                var sColorNew = "#";
+                for (var i = 1; i < 4; i += 1) {
+                    sColorNew += sColor.slice(i, i + 1).concat(sColor.slice(i, i + 1));
+                }
+                sColor = sColorNew;
+            }
+            //处理六位的颜色值
+            var sColorChange = [];
+            for (var j = 1; j < 7; j += 2) {
+                sColorChange.push(parseInt("0x" + sColor.slice(j, j + 2)));
+            }
+            return sColorChange;
+        } else {
+            return sColor;
+        }
+    },
+    /**
+     * 将rgb表示方式转换为hex表示方式
+     */
+    colorHex: function (rgb) {
+        var _this = rgb;
+        var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+        if (/^(rgb|RGB)/.test(_this)) {
+            var aColor = _this.replace(/(?:(|)|rgb|RGB)*/g, "").split(",");
+            var strHex = "#";
+            for (var i = 0; i < aColor.length; i++) {
+                var hex = Number(aColor[i]).toString(16);
+                hex = hex < 10 ? 0 + '' + hex : hex; // 保证每个rgb的值为2位
+                if (hex === "0") {
+                    hex += hex;
+                }
+                strHex += hex;
+            }
+            if (strHex.length !== 7) {
+                strHex = _this;
+            }
+            return strHex;
+        } else if (reg.test(_this)) {
+            var aNum = _this.replace(/#/, "").split("");
+            if (aNum.length === 6) {
+                return _this;
+            } else if (aNum.length === 3) {
+                var numHex = "#";
+                for (var i = 0; i < aNum.length; i += 1) {
+                    numHex += (aNum[i] + aNum[i]);
+                }
+                return numHex;
+            }
+        } else {
+            return _this;
+        }
+    },
+    /**
+     * RGB转16进制(rgb2hex)
+     * 输入：rgb(13,0,255)
+     * 输出：0x0d00ff
+     */
+    colorRGB2Hex: function (_color) {
+        var color = _color.toString();
+        var rgb = color.split(',');
+        var r = parseInt(rgb[0].split('(')[1]);
+        var g = parseInt(rgb[1]);
+        var b = parseInt(rgb[2].split(')')[0]);
+        var hex = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        return hex;
+    },
     /**
      * 生成UUID
      */
@@ -2727,22 +2746,47 @@ z3D.prototype.cabinetRateView = {
                         //遍历并清楚所有主机
                         for (var i = 0; i < count; i++) {
                             var sCube = _obj.children[i];
-                            //将所有纹理清楚
+                            //将所有纹理清除
                             if (_this.commonFunc.hasObj(sCube.material) && sCube.material.length > 0) {
                                 var materialOld = new Object();
                                 materialOld = sCube.material;
                                 sCube.material = [];
                                 sCube.materialOld = materialOld;
+                            } else {
+                                if (sCube.type == "Object3D") {
+                                    if (_this.commonFunc.hasObj(sCube.children) && sCube.children.length > 0) {
+                                        var Scount = sCube.children.length;
+                                        //遍历并清楚所有主机
+                                        for (var j = 0; j < Scount; j++) {
+                                            var SsCube = sCube.children[j];
+                                            //将所有纹理清除
+                                            if (_this.commonFunc.hasObj(SsCube.material) && SsCube.material.length > 0) {
+                                                var SmaterialOld = new Object();
+                                                SmaterialOld = SsCube.material;
+                                                SsCube.material = [];
+                                                SsCube.materialOld = SmaterialOld;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
+                //创建对象辅助线
                 var bboxHelper = new THREE.BoxHelper(_obj, 0x999999);
                 _this.cabinetRateBoxHelpers.push(bboxHelper);
                 _this.scene.add(bboxHelper);
-
-                var eCcube = _this.createCabinetCube(_obj, Math.random() * 0xff0000, 0.8, Math.random() * 200);
-
+                //系数
+                var p = 100;
+                var arrayColor = _this.commonFunc.gradientColor("#00ff00", "#ff0000", p); //起始绿色，终点红色，共分p段
+                //计算占有率
+                var r = _this.cabinetRateView.CalculateRate(_obj.uuid);
+                r = r != 0 ? r : 1;
+                var hc = _this.commonFunc.colorRGB2Hex(arrayColor[r - 1]);
+                //根据占有率渲染柱状体
+                var eCcube = _this.createCabinetCube(_obj, hc, 0.8, r * 2);
+                _this.cabinetRateCube.push(eCcube);
             });
         }
     },
@@ -2765,6 +2809,23 @@ z3D.prototype.cabinetRateView = {
                                 materialOld = sCube.materialOld;
                                 sCube.materialOld = [];
                                 sCube.material = materialOld;
+                            } else {
+                                if (sCube.type == "Object3D") {
+                                    if (_this.commonFunc.hasObj(sCube.children) && sCube.children.length > 0) {
+                                        var Scount = sCube.children.length;
+                                        //遍历并清楚所有主机
+                                        for (var j = 0; j < Scount; j++) {
+                                            var SsCube = sCube.children[j];
+                                            //将所有纹理清除
+                                            if (_this.commonFunc.hasObj(SsCube.materialOld) && SsCube.materialOld.length > 0) {
+                                                var SmaterialOld = new Object();
+                                                SmaterialOld = SsCube.materialOld;
+                                                SsCube.materialOld = [];
+                                                SsCube.material = SmaterialOld;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -2777,6 +2838,33 @@ z3D.prototype.cabinetRateView = {
                     _this.scene.remove(_obj);
                 });
             }
+            //查找所有对象,并删除
+            if (_this.cabinetRateCube != null && _this.cabinetRateCube.length > 0) {
+                $.each(_this.cabinetRateCube, function (index, _obj) {
+                    _this.clearCabinetCube(_obj);
+                });
+            }
         }
+    },
+    /**
+     * 根据机柜uuid找到所有其所有子集
+     */
+    findChildrenByID: function (_uuid) {
+        var _this = z3DObj;
+        return serverData;
+    },
+    /**
+     * 根据机柜uuid,计算机柜占有率
+     */
+    CalculateRate: function (_uuid) {
+        var _this = z3DObj;
+        var childrenServer = _this.cabinetRateView.findChildrenByID(_uuid);
+        var serverHeightSum = 0;
+        $.each(childrenServer, function (index, _child) {
+            var sh = _this.commonFunc.switchServerType(_child.serverType);
+            serverHeightSum = serverHeightSum + sh.serverHeight;
+        });
+        var res = Math.round(serverHeightSum / _this.cabinetHeight * 100);
+        return res;
     }
 };
