@@ -79,6 +79,8 @@ z3D.prototype.initz3D = function (_fId, _option, _basedata, _datajson) {
     this.cabinetRateBoxHelpers = []; //对象辅助线集合
     this.cabinetRateCube = []; //生成对象集合
 
+    this.alarmTipsArr = []; //告警标志
+
     var _this = this;
 };
 
@@ -411,6 +413,12 @@ z3D.prototype.animation = function () {
     var _this = z3DObj;
     _this.renderer.clear();
     requestAnimationFrame(_this.animation); //循环渲染
+    //渲染告警信息，看向相机镜头
+    if (_this.alarmTipsArr.length > 0) {
+        $.each(_this.alarmTipsArr, function (index, _tip) {
+            _tip.lookAt(_this.camera.position);
+        });
+    }
     _this.controls.update();
     _this.renderer.render(_this.scene, _this.camera);
     _this.stats.update();
@@ -1453,6 +1461,9 @@ z3D.prototype.createServerData = function (_Pobj, _ServerObj) {
             rotation: _sobj.rotation || serverRotation, //旋转 表示x方向0度  arb表示任意参数值[x,y,z,angle] 
             style: _sobj.style || serverStyle
         };
+        if (_this.commonFunc.hasObj(_sobj.alarmLevel)) {
+            serverObj.alarmLevel = _sobj.alarmLevel;
+        }
         ServerData.push(serverObj);
     });
 
@@ -1479,9 +1490,16 @@ z3D.prototype.createServerCube = function (_this, _obj) {
     //清除原有对象
     _this.commonFunc.removeInObject3D('uuid', _obj.CabinetId);
     _this.scene.remove(cabinet);
-
     //重新添加对象
     _this.addObject(cabinet);
+    //判断是否有告警信息
+    if (_this.commonFunc.hasObj(_obj.alarmLevel)) {
+        _this.createAlarmTips([{
+            uuid: _obj.uuid,
+            pid: _obj.CabinetId,
+            level: _obj.level
+        }]);
+    }
 };
 /**
  * 清楚服务器
@@ -1524,7 +1542,59 @@ z3D.prototype.createGlasses = function (_this, _obj) {
     var tmpobj2 = _this.createPlaneGeometry(_this, _obj);
     _this.addObject(tmpobj2);
 };
+/**
+ * 创建告警标识
+ * @param {*} _obj [{
+ * uuid:''
+ * pid:''
+ * level:''
+ * }]
+ */
+z3D.prototype.createAlarmTips = function (_objs) {
+    var _this = z3DObj;
+    //清除原有告警
+    _this.clearAlarmTips();
+    if (_objs != null && _objs.length > 0) {
+        $.each(_objs, function (index, _obj) {
+            var level = _obj.level || '1';
+            var parentCabinet = _this.commonFunc.findObject3DByUUID(_obj.pid);
+            var parentServer = _this.commonFunc.findObjectByUUID(_obj.uuid);
+            var levelColor = _this.commonFunc.switchAlarmLevel(level);
 
+            //制作告警标志
+            var geometry = new THREE.PlaneGeometry(50, 50, 1);
+            var texture = new THREE.TextureLoader().load('images/alarmTips.png');
+            var material = new THREE.MeshPhongMaterial({
+                color: 0x000000,
+                emissive: levelColor, //告警表面颜色
+                map: texture,
+                transparent: true
+            });
+            var alarmTip = new THREE.Mesh(geometry, material);
+            alarmTip.position.set(parentCabinet.position.x, _this.cabinetHeight + 40, parentCabinet.position.z);
+            _this.alarmTipsArr.push(alarmTip);
+            //转换颜色
+            if (parentServer != null) {
+                _this.commonFunc.setSkinColorById(parentServer.uuid, levelColor);
+            }
+            _this.addObject(alarmTip);
+        });
+    }
+};
+/**
+ * 清楚告警信息
+ * @param {*} _obj 
+ */
+z3D.prototype.clearAlarmTips = function () {
+    var _this = z3DObj;
+    if (_this.alarmTipsArr.length > 0) {
+        $.each(_this.alarmTipsArr, function (index, _tip) {
+            _this.commonFunc.removeInObject('uuid', _tip.uuid);
+            _this.scene.remove(_tip);
+        });
+        _this.alarmTipsArr = [];
+    }
+};
 /**
  * 创建皮肤参数对象
  * @param {*} _this 
@@ -1755,6 +1825,25 @@ z3D.prototype.commonFunc = {
         return findedobj;
     },
     /**
+     * 查找对象
+     */
+    findObjectByUUID: function (_uuid) {
+        var _this = z3DObj;
+        //console.log('findObject');
+        var findedobj = null;
+        $.each(_this.objects, function (index, _obj) {
+            if (_obj.type != "Object3D") {
+                if (_obj.uuid != null && _obj.uuid != '') {
+                    if (_obj.uuid == _uuid) {
+                        findedobj = _obj;
+                        return true;
+                    }
+                }
+            }
+        });
+        return findedobj;
+    },
+    /**
      * 在动态数据中查找对象
      */
     findObjectInData: function (_objuuid, _objs) {
@@ -1881,6 +1970,24 @@ z3D.prototype.commonFunc = {
     setSkinColor: function (_objname, _color) {
         var _this = z3DObj;
         var _obj = _this.commonFunc.findObject(_objname);
+        if (_obj != null) {
+            if (_this.commonFunc.hasObj(_obj.material.emissive)) {
+                _obj.material.emissive.setHex(_color);
+            } else if (_this.commonFunc.hasObj(_obj.material)) {
+                if (_obj.material.length > 0) {
+                    $.each(_obj.material, function (index, obj) {
+                        obj.emissive.setHex(_color);
+                    });
+                }
+            }
+        }
+    },
+    /**
+     * 根据UUID设置表皮颜色
+     */
+    setSkinColorById: function (_objuuid, _color) {
+        var _this = z3DObj;
+        var _obj = _this.commonFunc.findObjectByUUID(_objuuid);
         if (_obj != null) {
             if (_this.commonFunc.hasObj(_obj.material.emissive)) {
                 _obj.material.emissive.setHex(_color);
@@ -2214,6 +2321,26 @@ z3D.prototype.commonFunc = {
             _obj.translateZ(-cp0.z);
         });
         _obj3d.position.set(cp0.x, 0, cp0.z);
+    },
+    /**
+     * 根据服务器类型,返回相应数据
+     * @returns {}
+     */
+    switchAlarmLevel: function (_level) {
+        var _this = z3DObj;
+        var levelColor = 0xff0000;
+        switch (_level) {
+            case '1':
+                levelColor = 0xff0000; //红色
+                break;
+            case '2':
+                levelColor = 0xffff00; //黄色
+                break;
+            case '3':
+                levelColor = 0x0000ff; //蓝色
+                break;
+        }
+        return levelColor;
     },
     /**
      * 根据服务器类型,返回相应数据

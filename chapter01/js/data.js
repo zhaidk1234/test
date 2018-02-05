@@ -608,7 +608,7 @@ var baseObjects = [
     {
         show: true,
         name: 'windowGlass1',
-        uuid: "",
+        uuid: "00000000-0000-0000-0000-000000000017",
         objType: 'glasses',
         width: 500,
         height: 160,
@@ -634,7 +634,7 @@ var eCData = [
     {
         name: 'cabinet1_1',
         shellname: 'cabinet1_1_shell',
-        uuid: '',
+        uuid: 'JG000000-0000-0000-0000-000000000001',
         position: {
             x: 300,
             z: -180
@@ -644,7 +644,7 @@ var eCData = [
     {
         name: 'cabinet1_2',
         shellname: 'cabinet1_2_shell',
-        uuid: '',
+        uuid: 'JG000000-0000-0000-0000-000000000002',
         position: {
             x: -300,
             z: -180
@@ -655,24 +655,27 @@ var eCData = [
 //服务器
 var serverData = [ //主机1
     {
-        uuid: "",
+        uuid: "SV000000-0000-0000-0000-000000000001",
         name: 'equipment_card_1',
         serverType: "is_database",
-        order: "1"
+        order: "1",
+        alarmLevel:'1'
     },
     //主机2
     {
-        uuid: "",
+        uuid: "SV000000-0000-0000-0000-000000000002",
         name: 'equipment_card_2',
         serverType: "is_server",
-        order: "2"
+        order: "2",
+        alarmLevel:'2'        
     },
     //主机3
     {
-        uuid: "",
+        uuid: "SV000000-0000-0000-0000-000000000003",
         name: 'equipment_card_3',
         serverType: "Type3",
-        order: "3"
+        order: "3",
+        alarmLevel:'3'        
     },
 ];
 
@@ -788,7 +791,24 @@ var baseBtns = [{
             //注册移动事件
             z3DObj.initDragControl(ecObjs);
         }
-    }
+    },
+    {
+        btnid: "btn_alarm",
+        btnTitle: "告警信息",
+        btnimg: "images/icons/alarm.png",
+        event: function () {
+            z3DObj.createAlarmTips([{
+                uuid:'SV000000-0000-0000-0000-000000000001',
+                pid:'JG000000-0000-0000-0000-000000000001',
+                level:'1'
+            },
+            {
+                uuid:'SV000000-0000-0000-0000-000000000002',
+                pid:'JG000000-0000-0000-0000-000000000002',
+                level:'2'
+            }]);
+        }
+    },
 ];
 
 //基础数据
