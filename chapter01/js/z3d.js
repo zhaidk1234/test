@@ -13,7 +13,11 @@
  */
 function z3D() {}
 var z3DObj = null;
-
+var editState = 0; //编辑状态，0为不可编辑，1为可编辑
+var moveState = 0; //机柜移动状态，0为不可移动，1为可移动
+var cabinetRateState = 0; //机柜利用状态, 0为不显示,1为显示
+var serverRateState = 0; //服务器利用状态, 0为不显示,1为显示
+var alarmState = 0; //告警信息状态, 0为不显示,1为显示
 /**
  * 方法：初始化
  * @param {*} _fId 画布所属div的Id
@@ -71,14 +75,12 @@ z3D.prototype.initz3D = function (_fId, _option, _basedata, _datajson) {
     this.basedata = _basedata; //基础数据渲染 
     this.datajson = _datajson; //需添加数据
 
-    this.editState = 0; //编辑状态，0为不可编辑，1为可编辑
-    this.moveState = 0; //机柜移动状态，0为不可移动，1为可移动
-    this.cabinetRateState = 0; //机柜利用状态, 0为不显示,1为显示
-    this.alarmState = 0; //机柜利用状态, 0为不显示,1为显示
-    this.hiding = null; //拖动组件隐藏状态
 
+
+    this.hiding = null; //拖动组件隐藏状态
     this.cabinetRateBoxHelpers = []; //对象辅助线集合
     this.cabinetRateCube = []; //生成对象集合
+    this.serversRateCubeArr = []; //机柜利用率
 
     this.alarmTipsArr = []; //告警标志
     this.alarmServersArr = []; //告警标志
@@ -299,7 +301,7 @@ z3D.prototype.initTransformControl = function () {
     _this.scene.add(_this.transformControl);
     //隐藏变换相关动作
     _this.transformControl.addEventListener('change', function (e) {
-        //_this.editState = _this.editState ? 0 : 1; //切换可编辑状态
+        //editState = editState ? 0 : 1; //切换可编辑状态
         _this.initCoordinates(_this.transformControl.object.position); //显示坐标
         _this.commonFunc.delayHideTransform();
     });
@@ -307,7 +309,7 @@ z3D.prototype.initTransformControl = function () {
         _this.commonFunc.cancelHideTransorm();
     });
     _this.transformControl.addEventListener('mouseUp', function (e) {
-        // _this.editState = 0;
+        // editState = 0;
         console.log(_this.transformControl.object.position);
         _this.commonFunc.delayHideTransform();
     });
@@ -389,9 +391,9 @@ z3D.prototype.initAlarmInfo = {
             html += '</table>';
             var cDiv = document.getElementById("alarmInfo");
             var p = _this.commonFunc.convertToSceenCoordinate({
-                x:_obj.parent.position.x,
-                y:_obj.position.y,
-                z:_obj.parent.position.z
+                x: _obj.parent.position.x,
+                y: _obj.position.y,
+                z: _obj.parent.position.z
             });
             if (cDiv != null) {
                 cDiv.style.top = p.y + 10 + 'px';
@@ -438,8 +440,8 @@ z3D.prototype.initDragControl = function (_objs) {
     _this.dragcontrols = new THREE.DragControls(objs, _this.camera, _this.renderer.domElement); //
     _this.dragcontrols.enabled = false;
     _this.dragcontrols.addEventListener('hoveron', function (event) {
-        //if (_this.editState != 0) {
-        if (_this.moveState != 0) { //可移动状态 
+        //if (editState != 0) {
+        if (moveState != 0) { //可移动状态 
             _this.transformControl.attach(event.object.parent);
         }
         //}
@@ -1230,7 +1232,7 @@ z3D.prototype.createEmptyCabinet = function (_this, _obj) {
     //上
     var upobj = {
         show: true,
-        uuid: "",
+        uuid: '',
         name: '',
         objType: 'cube',
         length: _obj.size.length + 1,
@@ -1327,6 +1329,7 @@ z3D.prototype.createEmptyCabinet = function (_this, _obj) {
     tempobj.name = _obj.name;
     tempobj.uuid = _obj.uuid;
     Cabinet.name = _obj.shellname;
+    Cabinet.uuid = _this.commonFunc.guid();
     _this.objects.push(Cabinet);
     tempobj.position = Cabinet.position;
 
@@ -1336,7 +1339,7 @@ z3D.prototype.createEmptyCabinet = function (_this, _obj) {
         if (doors.skins.length == 1) { //单门
             var singledoorobj = {
                 show: true,
-                uuid: "",
+                uuid: _this.commonFunc.guid(),
                 name: _obj.doors.doorname[0],
                 objType: 'cube',
                 length: _obj.size.thick,
@@ -1568,7 +1571,7 @@ z3D.prototype.createServerCube = function (_this, _obj) {
     //重新添加对象
     _this.addObject(cabinet);
     //判断是否有告警信息
-    if (_this.commonFunc.hasObj(_obj.alarmLevel) && _this.alarmState) {
+    if (_this.commonFunc.hasObj(_obj.alarmLevel) && alarmState) {
         var levelColor = _this.commonFunc.switchAlarmLevel(_obj.alarmLevel);
         _this.commonFunc.setSkinColorById(_obj.uuid, levelColor);
         _sCube.isAlarm = true;
@@ -1627,8 +1630,8 @@ z3D.prototype.createAlarmTips = function (_objs) {
     var _this = z3DObj;
     //清除原有告警
     _this.clearAlarmTips();
-    _this.alarmState = _this.alarmState == 0 ? 1 : 0;
-    if (_objs != null && _objs.length > 0 && _this.alarmState) {
+    alarmState = alarmState == 0 ? 1 : 0;
+    if (_objs != null && _objs.length > 0 && alarmState) {
         $.each(_objs, function (index, _obj) {
             var level = _obj.level || '1';
             var parentCabinet = _this.commonFunc.findObject3DByUUID(_obj.pid);
@@ -1803,7 +1806,7 @@ z3D.prototype.viewRecover = function (_plan) {
     var conPosition = new createjs.Tween(controls.object.position)
         .to(controls.position0, 1000, createjs.Ease.InOut);
     //根据编辑状态，更换视角
-    if (_this.editState) {
+    if (editState) {
         conPosition.to({
             x: 0,
             y: 2000,
@@ -1816,7 +1819,7 @@ z3D.prototype.viewRecover = function (_plan) {
         y: 0,
         z: 0
     });
-    controls.enableRotate = _this.editState == 1 ? false : true; //不允许旋转
+    controls.enableRotate = editState == 1 ? false : true; //不允许旋转
 };
 /**
  * 改变编辑状态
@@ -1825,10 +1828,10 @@ z3D.prototype.viewRecover = function (_plan) {
  */
 z3D.prototype.changeEditState = function (_plan) {
     var _this = z3DObj;
-    // _this.editState = _this.editState == 0 ? 1 : 0; //更改可编辑状态
-    // if (_this.editState == 0) {
-    _this.moveState = _this.moveState == 0 ? 1 : 0; //更改可移动状态
-    if (_this.moveState == 0) {
+    // editState = editState == 0 ? 1 : 0; //更改可编辑状态
+    // if (editState == 0) {
+    moveState = moveState == 0 ? 1 : 0; //更改可移动状态
+    if (moveState == 0) {
         _this.transformControl.dispose(); //取消拖拽
         _this.transformControl.detach();
         _this.dragcontrols.enabled = false; //取消控制
@@ -2648,8 +2651,9 @@ z3D.prototype.commonFunc = {
      * 输出：0x0d00ff
      */
     colorRGB2Hex: function (_color) {
+        var _this = z3DObj;
         var color = _color.toString();
-        var hex = _this.commonFunc.colorRGBTo16(color);
+        var hex = '0x' + _this.commonFunc.colorRGBTo16(color);
         return hex;
     },
     /**
@@ -2692,7 +2696,7 @@ z3D.prototype.onDocumentMouseDown = function (event) {
     }, 300);
     event.preventDefault();
     //可编辑时
-    if (_this.editState) {
+    if (editState) {
         console.log(_this.mouseClick);
         if (event.button == 0) { //鼠标左键
             var vector = new THREE.Vector3(); //三维坐标对象
@@ -2962,7 +2966,7 @@ z3D.prototype.cabinetRateView = {
      */
     initRate: function () {
         var _this = z3DObj;
-        _this.cabinetRateState = _this.cabinetRateState == 0 ? 1 : 0;
+        cabinetRateState = cabinetRateState == 0 ? 1 : 0;
         //找到所有机柜
         var ecObjs = [];
         $.each(_this.objects, function (index, _obj) {
@@ -2970,7 +2974,7 @@ z3D.prototype.cabinetRateView = {
                 ecObjs.push(_obj);
             }
         });
-        if (_this.cabinetRateState) {
+        if (cabinetRateState) {
             _this.cabinetRateView.showRate(ecObjs);
         } else {
             _this.cabinetRateView.hideRate(ecObjs);
@@ -3109,5 +3113,273 @@ z3D.prototype.cabinetRateView = {
         });
         var res = Math.round(serverHeightSum / _this.cabinetHeight * 100);
         return res;
+    }
+};
+/**
+ * 机柜利用率显示
+ * @param {*} _obj 
+ * @param {*} func 
+ */
+z3D.prototype.serverRateView = {
+    /**
+     * 初始化利用率方法
+     */
+    initRate: function () {
+        var _this = z3DObj;
+        serverRateState = serverRateState == 0 ? 1 : 0;
+        //初始化场景
+        if (serverRateState) {
+            _this.serverRateView.showRate();
+        } else {
+            _this.serverRateView.hideRate();
+        }
+    },
+    /**
+     * 显示服务器利用率
+     */
+    showRate: function () {
+        var _this = z3DObj;
+        //清除所有机柜数据
+        _this.serverRateView.clearCabinetData();
+        var objs = _this.serverRateView.findServerRateData();
+        _this.serverRateView.createServerRatData(objs);
+    },
+    /**
+     * 恢复原始加载
+     */
+    hideRate: function () {
+        var _this = z3DObj;
+        //清除所有设备数据
+        _this.serverRateView.clearServerData();
+        var objs = _this.serverRateView.findEmptyCabinetData();
+        _this.createEmptyCabinetData(objs);
+    },
+    /**
+     * 创建服务器利用率数据
+     */
+    createServerRatData: function (_objs) {
+        var _this = z3DObj;
+        $.each(_objs, function (index, _obj) {
+            var cabinetName = _obj.name || 'cn' + _this.commonFunc.guid();
+            var cabinetPositions = _obj.position || {
+                x: 0,
+                z: 0
+            };
+            //serverRateCube ==>src
+            var serverRateCubecount = 0;
+            var separate = 5; //每个设备之间的间隔
+            if (_this.commonFunc.hasObj(_obj.children) && _obj.children.length > 0) {
+                serverRateCubeCount = _obj.children.length;
+                //计算每一个设备高度
+                var srch = Math.floor((_this.cabinetHeight - separate * (_obj.children.length - 1)) / _obj.children.length);
+                //系数
+                var p = 100;
+                var arrayColor = _this.commonFunc.gradientColor("#00ff00", "#ff0000", p); //起始绿色，终点红色，共分p段
+
+                $.each(_obj.children, function (i, _c) {
+                    var sRCName = _c.name || 'src' + _this.commonFunc.guid();
+                    var sRCUUID = _c.uuid || _this.commonFunc.guid();
+                    var sRCRate = Number(_c.rate) || 0;
+                    var sRCSkinOpacity = 0.8;
+                    var sRCSkinColor = _this.commonFunc.colorRGB2Hex(arrayColor[sRCRate]) || 0xff0000;
+                    var sRCHeight = Math.floor(srch * sRCRate / 100);
+                    var rateCube = new THREE.Object3D();
+
+                    //如果利用率不等于零
+                    if (sRCRate != 0) {
+                        var cube = {
+                            show: true,
+                            name: sRCName,
+                            shellname: sRCName + '_shell',
+                            uuid: sRCUUID,
+                            rotation: _this.serverRotation, //基于坐标轴旋转,
+                            objType: 'cube',
+                            transparent: true,
+                            length: 62,
+                            width: 66,
+                            height: sRCHeight,
+                            thick: 2,
+                            x: cabinetPositions.x || 0,
+                            y: (i * srch) + sRCHeight / 2 || 0,
+                            z: cabinetPositions.z || 0,
+                            style: {
+                                skinColor: sRCSkinColor,
+                                opacity: sRCSkinOpacity,
+                                skin: {
+                                    skin_up: {
+                                        skinColor: sRCSkinColor,
+                                        opacity: sRCSkinOpacity,
+                                    },
+                                    skin_down: {
+                                        skinColor: sRCSkinColor,
+                                        opacity: sRCSkinOpacity,
+                                    },
+                                    skin_left: {
+                                        skinColor: sRCSkinColor,
+                                        opacity: sRCSkinOpacity,
+                                    },
+                                    skin_right: {
+                                        skinColor: sRCSkinColor,
+                                        opacity: sRCSkinOpacity,
+                                    },
+                                    skin_behind: {
+                                        skinColor: sRCSkinColor,
+                                        opacity: sRCSkinOpacity,
+                                    }
+                                }
+                            }
+                        };
+                        //生成利用率数据
+                        var tempObj = _this.createCube(_this, cube);
+                        rateCube.add(tempObj);
+                    }
+
+                    var sRCSkinOpacityAuxiliary = 1;
+                    var sRCSkinColorAuxiliary = 0xffffff;
+                    var sRCHeightAuxiliary = srch - sRCHeight - separate;
+                    var cubeAuxiliary = {
+                        show: true,
+                        name: sRCName + '_Auxiliary',
+                        shellname: sRCName + '_shell_Auxiliary',
+                        uuid: _this.commonFunc.guid(),
+                        rotation: _this.serverRotation, //基于坐标轴旋转,
+                        objType: 'cube',
+                        transparent: true,
+                        length: 62,
+                        width: 66,
+                        height: sRCHeightAuxiliary,
+                        thick: 2,
+                        x: cabinetPositions.x || 0,
+                        y: (i * srch) + (sRCHeight + srch) / 2 || 0,
+                        z: cabinetPositions.z || 0,
+                        style: {
+                            skinColor: sRCSkinColorAuxiliary,
+                            opacity: sRCSkinOpacityAuxiliary,
+                            skin: {
+                                skin_up: {
+                                    skinColor: sRCSkinColorAuxiliary,
+                                    opacity: sRCSkinOpacityAuxiliary,
+                                },
+                                skin_down: {
+                                    skinColor: sRCSkinColorAuxiliary,
+                                    opacity: sRCSkinOpacityAuxiliary,
+                                },
+                                skin_left: {
+                                    skinColor: sRCSkinColorAuxiliary,
+                                    opacity: sRCSkinOpacityAuxiliary,
+                                },
+                                skin_right: {
+                                    skinColor: sRCSkinColorAuxiliary,
+                                    opacity: sRCSkinOpacityAuxiliary,
+                                },
+                                skin_behind: {
+                                    skinColor: sRCSkinColorAuxiliary,
+                                    opacity: sRCSkinOpacityAuxiliary,
+                                }
+                            }
+                        }
+                    };
+                    //生成利用率辅助数据                    
+                    var tempObjAuxiliary = _this.createCube(_this, cubeAuxiliary);
+                    rateCube.add(tempObjAuxiliary);
+                    _this.serversRateCubeArr.push(rateCube);
+                    _this.addObject(rateCube);
+                    //创建对象辅助线
+                    var bboxHelper = new THREE.BoxHelper(rateCube, 0x999999);
+                    _this.serversRateCubeArr.push(bboxHelper);
+                    _this.scene.add(bboxHelper);
+                });
+            }
+        });
+    },
+    /**
+     * 找到服务器利用率数据数据
+     */
+    findServerRateData: function () {
+        var _this = z3DObj;
+        var sr = new Array();
+        sr = eCData;
+        sr[0].children = serverData;
+        sr[1].children = serverData;
+        return sr;
+    },
+    /**
+     * 找到机柜数据
+     */
+    findEmptyCabinetData: function () {
+        var _this = z3DObj;
+        return eCData;
+    },
+    /**
+     * 屏幕中清除所有机柜数据
+     */
+    clearCabinetData: function () {
+        var _this = z3DObj;
+        //找到所有机柜
+        var ecObjs = [];
+        $.each(_this.objects, function (index, _obj) {
+            if (_obj.type == "Object3D") {
+                ecObjs.push(_obj);
+            }
+        });
+        //删除所有机柜
+        $.each(ecObjs, function (index, _obj) {
+            if (_this.commonFunc.hasObj(_obj.children) && _obj.children.length > 0) {
+                $.each(_obj.children, function (index, _c) {
+                    if (_c.type == "Object3D") {
+                        _this.commonFunc.removeInObject3D('uuid', _c.uuid);
+                    } else {
+                        _this.commonFunc.removeInObject('uuid', _c.uuid);
+                    }
+                    _this.scene.remove(_c);
+                });
+            }
+            _this.commonFunc.removeInObject3D('uuid', _obj.uuid);
+            _this.scene.remove(_obj);
+        });
+    },
+    /**
+     * 屏幕中清除所有设备数据
+     */
+    clearServerData: function () {
+        var _this = z3DObj;
+        //找到所有设备
+        if (_this.serversRateCubeArr.length > 0) {
+            //删除所有机柜
+            $.each(_this.serversRateCubeArr, function (index, _obj) {
+                if (_obj.type == "Object3D") {
+                    _this.commonFunc.removeInObject3D('uuid', _obj.uuid);
+                } else {
+                    _this.commonFunc.removeInObject('uuid', _obj.uuid);
+                }
+                _this.scene.remove(_obj);
+            });
+        }
+    }
+};
+/**
+ * 机柜拖拽显示
+ * @param {*} _obj 
+ * @param {*} func 
+ */
+z3D.prototype.cabinetMoveView = {
+    /**
+     * 初始化移动事件
+     */
+    init: function () {
+        var _this = z3DObj;
+        //视角俯视事件
+        _this.viewRecover("XZ"); //控制哪个页面
+        //找到所有机柜
+        var ecObjs = [];
+        $.each(_this.objects, function (index, _obj) {
+            if (_obj.type == "Object3D") {
+                $.each(_obj.children, function (index, _o) {
+                    ecObjs.push(_o);
+                });
+            }
+        });
+        //注册移动事件
+        _this.initDragControl(ecObjs);
     }
 };

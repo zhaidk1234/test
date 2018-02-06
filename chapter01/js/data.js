@@ -659,7 +659,8 @@ var serverData = [ //主机1
         name: 'equipment_card_1',
         serverType: "is_database",
         order: "1",
-        alarmLevel:'1'
+        rate: "60",
+        alarmLevel: '1'
     },
     //主机2
     {
@@ -667,13 +668,15 @@ var serverData = [ //主机1
         name: 'equipment_card_2',
         serverType: "is_server",
         order: "2",
-        alarmLevel:'2'        
+        rate: "30",
+        alarmLevel: '2'
     },
     //主机3
     {
         uuid: "SV000000-0000-0000-0000-000000000003",
         name: 'equipment_card_3',
         serverType: "Type3",
+        rate: "90",
         order: "3",
     },
 ];
@@ -745,22 +748,67 @@ var baseBtns = [{
         btnTitle: "场景复位",
         btnimg: "images/icons/reset.png",
         event: function () {
-            $('#' + canvasId).empty();
-            zstation = null;
-            z3DObj = null;
-            zstation = new z3D();
-            zstation.initz3D(canvasId, initOption, baseData);
-            zstation.start();
+            threeRestart();
             //加载机柜数据
             z3DObj.createEmptyCabinetData(eCData);
         }
     },
+    // {
+    //     btnid: "btn_connection",
+    //     btnTitle: "编辑墙壁",
+    //     btnimg: "images/icons/connection.png",
+    //     event: function () {
+    //         threeRestart();
+    //         if (moveState) {
+    //             z3DObj.cabinetMoveView.init();
+    //         }
+    //         if (cabinetRateState) {
+    //             z3DObj.cabinetRateView.initRate();
+    //         }
+    //         if (serverRateState) {
+    //             z3DObj.serverRateView.initRate();
+    //         }
+    //         if (alarmState) {
+    //             z3DObj.createAlarmTips([{
+    //                     uuid: 'SV000000-0000-0000-0000-000000000001',
+    //                     pid: 'JG000000-0000-0000-0000-000000000001',
+    //                     level: '1'
+    //                 },
+    //                 {
+    //                     uuid: 'SV000000-0000-0000-0000-000000000002',
+    //                     pid: 'JG000000-0000-0000-0000-000000000002',
+    //                     level: '2'
+    //                 }
+    //             ]);
+    //         }
+    //         //z3DObj.createLinkLine(); //创建连接线
+    //     }
+    // },
     {
-        btnid: "btn_connection",
-        btnTitle: "编辑墙壁",
-        btnimg: "images/icons/connection.png",
+        btnid: "btn_space",
+        btnTitle: "服务器利用率",
+        btnimg: "images/icons/space.png",
         event: function () {
-            //z3DObj.createLinkLine(); //创建连接线
+            if (moveState) {
+                z3DObj.cabinetMoveView.init();
+            }
+            if (cabinetRateState) {
+                z3DObj.cabinetRateView.initRate();
+            }
+            if (alarmState) {
+                z3DObj.createAlarmTips([{
+                        uuid: 'SV000000-0000-0000-0000-000000000001',
+                        pid: 'JG000000-0000-0000-0000-000000000001',
+                        level: '1'
+                    },
+                    {
+                        uuid: 'SV000000-0000-0000-0000-000000000002',
+                        pid: 'JG000000-0000-0000-0000-000000000002',
+                        level: '2'
+                    }
+                ]);
+            }
+            z3DObj.serverRateView.initRate();
         }
     },
     {
@@ -768,6 +816,25 @@ var baseBtns = [{
         btnTitle: "机柜利用率",
         btnimg: "images/icons/usage.png",
         event: function () {
+            if (moveState) {
+                z3DObj.cabinetMoveView.init();
+            }
+            if (serverRateState) {
+                z3DObj.serverRateView.initRate();
+            }
+            if (alarmState) {
+                z3DObj.createAlarmTips([{
+                        uuid: 'SV000000-0000-0000-0000-000000000001',
+                        pid: 'JG000000-0000-0000-0000-000000000001',
+                        level: '1'
+                    },
+                    {
+                        uuid: 'SV000000-0000-0000-0000-000000000002',
+                        pid: 'JG000000-0000-0000-0000-000000000002',
+                        level: '2'
+                    }
+                ]);
+            }
             z3DObj.cabinetRateView.initRate();
         }
     },
@@ -776,19 +843,26 @@ var baseBtns = [{
         btnTitle: "拖拽机柜",
         btnimg: "images/icons/edit.png",
         event: function () {
-            //视角俯视事件
-            z3DObj.viewRecover("XZ"); //控制哪个页面
-            //找到所有机柜
-            var ecObjs = [];
-            $.each(z3DObj.objects, function (index, _obj) {
-                if (_obj.type == "Object3D") {
-                    $.each(_obj.children, function (index, _o) {
-                        ecObjs.push(_o);
-                    });
-                }
-            });
-            //注册移动事件
-            z3DObj.initDragControl(ecObjs);
+            if (cabinetRateState) {
+                z3DObj.cabinetRateView.initRate();
+            }
+            if (serverRateState) {
+                z3DObj.serverRateView.initRate();
+            }
+            if (alarmState) {
+                z3DObj.createAlarmTips([{
+                        uuid: 'SV000000-0000-0000-0000-000000000001',
+                        pid: 'JG000000-0000-0000-0000-000000000001',
+                        level: '1'
+                    },
+                    {
+                        uuid: 'SV000000-0000-0000-0000-000000000002',
+                        pid: 'JG000000-0000-0000-0000-000000000002',
+                        level: '2'
+                    }
+                ]);
+            }
+            z3DObj.cabinetMoveView.init();
         }
     },
     {
@@ -796,18 +870,28 @@ var baseBtns = [{
         btnTitle: "告警信息",
         btnimg: "images/icons/alarm.png",
         event: function () {
+            if (moveState) {
+                z3DObj.cabinetMoveView.init();
+            }
+            if (cabinetRateState) {
+                z3DObj.cabinetRateView.initRate();
+            }
+            if (serverRateState) {
+                z3DObj.serverRateView.initRate();
+            }
             z3DObj.createAlarmTips([{
-                uuid:'SV000000-0000-0000-0000-000000000001',
-                pid:'JG000000-0000-0000-0000-000000000001',
-                level:'1'
-            },
-            {
-                uuid:'SV000000-0000-0000-0000-000000000002',
-                pid:'JG000000-0000-0000-0000-000000000002',
-                level:'2'
-            }]);
+                    uuid: 'SV000000-0000-0000-0000-000000000001',
+                    pid: 'JG000000-0000-0000-0000-000000000001',
+                    level: '1'
+                },
+                {
+                    uuid: 'SV000000-0000-0000-0000-000000000002',
+                    pid: 'JG000000-0000-0000-0000-000000000002',
+                    level: '2'
+                }
+            ]);
         }
-    },
+    }
 ];
 
 //基础数据
