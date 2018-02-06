@@ -296,8 +296,9 @@ z3D.prototype.initMouseCtrl = function () {
 z3D.prototype.initTransformControl = function () {
     var _this = this;
     _this.transformControl = new THREE.TransformControls(_this.camera, _this.renderer.domElement);
-    //_this.transformControl.addEventListener('change', _this.animation);
+    _this.transformControl.size = 2; //自定义大小
     //_this.transformControl.axisoption = "XZ"; //自定义拖拽参考面
+    //_this.transformControl.addEventListener('change', _this.animation);
     _this.scene.add(_this.transformControl);
     //隐藏变换相关动作
     _this.transformControl.addEventListener('change', function (e) {

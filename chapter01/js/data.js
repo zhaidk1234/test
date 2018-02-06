@@ -2,7 +2,7 @@ var canvasId = "canvas-frame"; //定义元素id
 //初始化_option 参数 
 var initOption = {
     antialias: true,
-    showHelpGrid: true,
+    showHelpGrid: false,
     clearCoolr: 0xFFFFFF
 };
 //基础画布内容
